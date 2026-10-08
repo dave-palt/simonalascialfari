@@ -1,16 +1,16 @@
-# Simona Lascialfari — sito (simona-sito-4)
+# Simona Lascialfari — sito pubblico (submodule `site` in simona-infra)
 
 Sito portfolio statico prerenderizzato: React 19 + Vite 7 + TypeScript strict + Tailwind 4 (niente shadcn/ui, niente react-query), routing wouter, i18n IT/EN inline in `src/lib/i18n.tsx`. Form contatti → Cloudflare Worker (`worker/`) che invia email via Resend (**deploy differito**). Deploy: GitHub Pages, branch `gh-pages` via peaceiris (`.github/workflows/deploy.yml`), MAI tramite API deploy-pages.
 
 **Remota**: `git@github.com:dave-palt/simonalascialfari.git` (pubblica). Push su `main` → CI → gh-pages. Demo live: https://dave-palt.github.io/simonalascialfari/ . Storia git ricostruita il 2026-10-08 (orphan, prototipi purgati) — non cercare commit più vecchi.
 
-**Roadmap architetturale**: questo repo è la Fase 0 del piano complessivo (gallerie cliente cifrate, /admin, self-hosted publisher) — fonte di verità: `../PIANO-TECNICO.md` (rev.3, decisioni D1–D23). Prima di aggiungere feature oltre il sito portfolio, leggere quello.
+**Roadmap architetturale**: questo repo è la Fase 0 del piano complessivo (gallerie cliente cifrate, /admin, self-hosted publisher) — fonte di verità: `../../docs/PIANO-TECNICO.md` nella repo infra (rev.3, decisioni D1–D23). Prima di aggiungere feature oltre il sito portfolio, leggere quello.
 
 ## Comandi
 
 ```sh
 npm install
-npm run link-photos   # foto da ../simona-sito-2 e ../simona-sito-3 -> sources/photos (gitignored)
+npm run link-photos   # foto da ../../archivio-consegna (gitignorate; override: SIMONA_ARCHIVE)
 npm run gen-manifest  # rigenera derivati webp + manifest — SOLO con sources locali
 npm run dev           # Vite; /api proxato su wrangler dev :8787
 npm run typecheck     # tsc --noEmit (usa src/generated/manifest.json COMMITTATO)
@@ -57,4 +57,4 @@ Il drag-scroll dello slider usa **capture ritardato**: niente `setPointerCapture
 
 Push su `main` → CI (install → typecheck → build con `VITE_BASE=/<repo>/` automatico → peaceiris su `gh-pages` con `force_orphan`). Demo: https://dave-palt.github.io/simonalascialfari/ . Nota CDN: dopo un push, l'index.html servito può restare stantio ~10 min (Fastly) — per verificare subito l'artefatto usare `raw.githubusercontent.com/<repo>/gh-pages/`.
 
-Worker contatti (differito): deploy su account Cloudflare **di Simona** (mai Dave), `wrangler secret put RESEND_API_KEY` (la chiave vive SOLO lì, mai su GitHub), poi `gh variable set VITE_CONTACT_ENDPOINT --body <url-worker>/api/contact`. Runbook: appendice del piano in `../.hermes/plans/2026-10-08_180329-fase0-github-pages.md`.
+Worker contatti (differito): deploy su account Cloudflare **di Simona** (mai Dave), `wrangler secret put RESEND_API_KEY` (la chiave vive SOLO lì, mai su GitHub), poi `gh variable set VITE_CONTACT_ENDPOINT --body <url-worker>/api/contact`. Runbook: appendice del piano in `<workspace>/.hermes/plans/2026-10-08_180329-fase0-github-pages.md` (workspace = padre di `simona-infra`).

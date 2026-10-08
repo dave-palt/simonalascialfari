@@ -2,9 +2,12 @@
 # (Local) Copies the union of the two archive photo folders into
 # sources/photos/ — the ORIGINALS, never published. public/photos holds only
 # build-generated webp variants (.thumbs/.full).
+# Archive lives at <workspace>/archivio-consegna (sibling of simona-infra);
+# override with SIMONA_ARCHIVE if the layout changes.
 BASE="$(cd "$(dirname "$0")/.." && pwd)"
-SRC1="$BASE/../simona-sito-2/public/photos"
-SRC2="$BASE/../simona-sito-3/public/photos"
+ARCHIVE="${SIMONA_ARCHIVE:-$BASE/../../archivio-consegna}"
+SRC1="$ARCHIVE/simona-sito-2/public/photos"
+SRC2="$ARCHIVE/simona-sito-3/public/photos"
 OUT="$BASE/sources/photos"
 
 mkdir -p "$OUT"
