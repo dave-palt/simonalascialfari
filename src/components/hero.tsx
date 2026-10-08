@@ -30,6 +30,7 @@ export function Hero() {
     startScroll: number;
     moved: number;
     horizontal: boolean | null;
+    captured: boolean;
   } | null>(null);
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -113,11 +114,14 @@ export function Hero() {
       startScroll: el.scrollLeft,
       moved: 0,
       horizontal: e.pointerType === "mouse" ? true : null,
+      captured: false,
     };
-    if (e.pointerType === "mouse") {
-      el.setPointerCapture(e.pointerId);
-      el.style.cursor = "grabbing";
-    }
+    // NOTE: no immediate setPointerCapture for mouse — capturing on pointerdown
+    // retargets pointerup to the track, so the browser computes the click
+    // target as the track (common ancestor) and the tile's onClick NEVER fires
+    // (click-to-open-lightbox was dead on desktop). Capture is deferred to the
+    // first significant move (see handlePointerMove): a stationary press+release
+    // stays a native click on the tile, a real drag gets captured.
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -137,7 +141,16 @@ export function Hero() {
       }
       return; // let native touch scroll work for both axes
     }
-    el.scrollLeft = drag.startScroll - dx;
+    // Deferred capture: only grab the pointer once this is a real drag (>5px),
+    // so a plain click still lands on the tile (see handlePointerDown note).
+    if (!drag.captured && drag.moved > 5) {
+      drag.captured = true;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {}
+      el.style.cursor = "grabbing";
+    }
+    if (drag.captured) el.scrollLeft = drag.startScroll - dx;
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -145,9 +158,11 @@ export function Hero() {
     const el = trackRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     if (el && e.pointerType === "mouse") {
-      try {
-        el.releasePointerCapture(e.pointerId);
-      } catch {}
+      if (drag.captured) {
+        try {
+          el.releasePointerCapture(e.pointerId);
+        } catch {}
+      }
       el.style.cursor = "grab";
     }
     dragStateRef.current = null;
