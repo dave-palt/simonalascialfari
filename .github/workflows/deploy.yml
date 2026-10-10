@@ -38,6 +38,19 @@ jobs:
           VITE_CONTACT_ENDPOINT: ${{ vars.VITE_CONTACT_ENDPOINT }}
           VITE_BASE: "/${{ github.event.repository.name }}/"
 
+      - name: Assemble content (D19)
+        run: |
+          if git ls-remote --exit-code --heads origin content >/dev/null 2>&1; then
+            git fetch origin content
+            git --work-tree=. checkout origin/content -- galleries.json g 2>/dev/null || true
+            # copia i contenuti DENTRO dist (se esistono), sovrascrivendo
+            if [ -d g ]; then cp -a g/. dist/; fi
+            if [ -f galleries.json ]; then cp galleries.json dist/; fi
+            echo "contenuti inclusi da branch content"
+          else
+            echo "branch content assente — deploy solo codice"
+          fi
+
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
