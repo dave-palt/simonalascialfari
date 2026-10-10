@@ -105,8 +105,9 @@ export default {
         }),
       });
       if (!response.ok) {
-        // Include Resend's HTTP status for diagnostics (no body: could leak).
-        return json({ error: "send_failed", resend_status: response.status }, 502);
+        // TEMP diagnostic: include Resend's error message; revert after use.
+        const detail = await response.text().catch(() => "");
+        return json({ error: "send_failed", resend_status: response.status, detail }, 502);
       }
       return json({ ok: true });
     } catch {
