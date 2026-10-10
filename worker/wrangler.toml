@@ -10,11 +10,7 @@ CONTACT_FROM = "Simona Lascialfari <noreply@simonalascialfari.com>"
 CONTACT_TO = "simona.lascialfari.305@gmail.com"
 
 # Rate limiting: 10 requests per 10 minutes per IP
-# (namespace_id is an arbitrary ID required by the API, used for metrics)
-[[unsafe.bindings]]
+[[ratelimit]]
 name = "RATE_LIMITER"
-type = "ratelimit"
 namespace_id = "1001"
-[unsafe.bindings.options]
-interval = 600
-simple_limit = 10
+simple = { limit = 10, period = 600 }
