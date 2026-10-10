@@ -4,12 +4,17 @@ compatibility_date = "2026-10-01"
 
 # Public vars (no secrets). SITE_ORIGIN = the GitHub Pages / custom domain
 # origin that is allowed to call the API.
-# NOTE: CONTACT_FROM needs simonalascialfari.com verified on Resend
-# (SPF/DKIM). Until then, Resend rejects sends with 403 (unverified domain).
+# TEMP TEST MODE (until simonalascialfari.com is verified on Resend and the
+# domain swap happens): CORS open to the github.io demo; sender is the
+# resend.dev test address (deliverable ONLY to the Resend account owner).
+# Prod values to restore later:
+#   SITE_ORIGIN  = "https://www.simonalascialfari.com"
+#   CONTACT_FROM = "Simona Lascialfari <noreply@simonalascialfari.com>"
+#   CONTACT_TO   = "simona.lascialfari.305@gmail.com"
 [vars]
-SITE_ORIGIN = "https://www.simonalascialfari.com"
-CONTACT_FROM = "Simona Lascialfari <noreply@simonalascialfari.com>"
-CONTACT_TO = "simona.lascialfari.305@gmail.com"
+SITE_ORIGIN = "https://dave-palt.github.io"
+CONTACT_FROM = "Simona Lascialfari <onboarding@resend.dev>"
+CONTACT_TO = "gh@dav3.cc"
 
 # Rate limiting: 10 requests per minute per IP.
 # NOTE: the API only supports period = 10 | 60 seconds, so the original
