@@ -10,7 +10,7 @@ SITE_ORIGIN = "https://www.simonalascialfari.com"
 # simonalascialfari.com is verified on Resend (SPF/DKIM), use the test sender
 # (deliverable only to the Resend account owner's email).
 CONTACT_FROM = "Simona Lascialfari <onboarding@resend.dev>"
-CONTACT_TO = "simona.lascialfari.305@gmail.com"
+CONTACT_TO = "gh@dav3.cc"
 
 # Rate limiting: 10 requests per minute per IP.
 # NOTE: the API only supports period = 10 | 60 seconds, so the original
