@@ -104,7 +104,10 @@ export default {
           text: `Nome: ${data.name}\nEmail: ${data.email}\nTelefono: ${data.phone || "—"}\nLuogo: ${data.location || "—"}\n\n${data.message}`,
         }),
       });
-      if (!response.ok) return json({ error: "send_failed" }, 502);
+      if (!response.ok) {
+        // Include Resend's HTTP status for diagnostics (no body: could leak).
+        return json({ error: "send_failed", resend_status: response.status }, 502);
+      }
       return json({ ok: true });
     } catch {
       return json({ error: "send_failed" }, 502);
