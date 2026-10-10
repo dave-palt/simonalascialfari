@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Galleria</title>
+<link rel="stylesheet" href="../assets/app.css?v=1">
+</head>
+<body>
+<header class="bar">
+  <span class="brand">Simona Lascialfari</span>
+</header>
+
+<main id="gate">
+  <form id="pwform">
+    <p class="hint">Questa galleria è protetta. Inserisci la password che ti è stata comunicata.</p>
+    <input id="pw" type="password" autocomplete="off" placeholder="Password" autofocus>
+    <button type="submit" id="go">Entra</button>
+    <p id="err" class="err" hidden>Password errata</p>
+  </form>
+</main>
+
+<main id="gallery" hidden>
+  <h1 id="gtitle"></h1>
+  <div id="grid"></div>
+  <button id="more" hidden>Carica altre foto</button>
+  <footer><a id="dl" class="dl" target="_blank" rel="noopener">Scarica gli originali</a></footer>
+</main>
+
+<div id="lb" hidden>
+  <button id="close" aria-label="Chiudi">×</button>
+  <button id="prev" aria-label="Precedente">‹</button>
+  <img id="lbimg" alt="">
+  <button id="next" aria-label="Successiva">›</button>
+</div>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>
