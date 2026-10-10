@@ -1,0 +1,5 @@
+DirectoryIndex index.html
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^(?:privacy-policy|cookie-policy)/?$ index.html [L]
+</IfModule>
