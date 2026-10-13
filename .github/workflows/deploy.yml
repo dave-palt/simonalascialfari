@@ -52,9 +52,11 @@ jobs:
                 echo "warn: $item assente su content"
               fi
             done
-            # copia i contenuti DENTRO dist (se esistono), sovrascrivendo
-            if [ -d g ]; then cp -a g/. dist/; fi
-            if [ -d p ]; then cp -a p/. dist/p/; fi
+            # copia i contenuti DENTRO dist (se esistono), sovrascrivendo —
+            # g resta UNA DIRECTORY (g/<slug>/…): cp -a g/. dist/ lo appiattiva
+            # e romperebbe i link /g/<slug>/ del sito e g/assets della shell
+            if [ -d g ]; then cp -a g dist/; fi
+            if [ -d p ]; then cp -a p dist/; fi
             for f in galleries.json homepage.json 404.html .nojekyll; do
               if [ -f "$f" ]; then cp "$f" dist/; fi
             done
