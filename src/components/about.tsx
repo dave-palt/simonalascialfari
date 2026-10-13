@@ -5,7 +5,9 @@ import { motion } from "framer-motion";
 export function About() {
   const { t } = useTranslation();
 
-  const portraitImage = `${BASE}photos/.full/simona.webp`;
+  // ritratto del Chi sono: asset del sito (non un derivato galleria —
+  // quelle ora vivono cifrate nel publisher, con solo cover.webp in chiaro)
+  const portraitImage = `${BASE}img/simona-portrait.webp`;
 
   return (
     <section id="about" className="py-24 md:py-40 px-6 md:px-12 max-w-7xl mx-auto bg-background">
