@@ -42,10 +42,15 @@ jobs:
         run: |
           if git ls-remote --exit-code --heads origin content >/dev/null 2>&1; then
             git fetch origin content
-            # i contenuti del publisher vivono nel branch content — uno per
-            # volta: git checkout fallisce TUTTO se un path manca
+            # N.B. fetch di un solo branch → il ref è FETCH_HEAD, NON
+            # origin/content (ref remoto mai creato): usare FETCH_HEAD.
+            # Un item per volta: git checkout fallisce TUTTO se un path manca.
             for item in g p galleries.json homepage.json 404.html .nojekyll; do
-              git --work-tree=. checkout origin/content -- "$item" 2>/dev/null || true
+              if git --work-tree=. checkout FETCH_HEAD -- "$item" 2>/dev/null; then
+                echo "incluso da content: $item"
+              else
+                echo "warn: $item assente su content"
+              fi
             done
             # copia i contenuti DENTRO dist (se esistono), sovrascrivendo
             if [ -d g ]; then cp -a g/. dist/; fi
