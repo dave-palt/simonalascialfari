@@ -1,9 +1,11 @@
 import { useTranslation } from "@/lib/i18n";
 import { useManifest } from "@/hooks/use-manifest";
+import { useHomepageData } from "@/hooks/use-homepage";
 import { BASE } from "@/lib/base";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import type { HomepageGallery } from "@/lib/homepage";
 
 // Originals (full-res webp) in the lightbox; thumbnails in the grid
 const fullSrc = (slug: string, file: string) =>
@@ -25,10 +27,18 @@ const PROJECTS = [
 ];
 
 export function Portfolio() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { manifest } = useManifest();
+  const { data: hp } = useHomepageData();
   const [activeProject, setActiveProject] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // homepage gestita: gallerie visibili in ordine → griglia di link alle /g/
+  // (fallback totale ai progetti statici se la config manca o è vuota)
+  const managed = useMemo<HomepageGallery[]>(
+    () => (hp?.gallerie ?? []).filter((g) => g.visibile).sort((a, b) => a.ordine - b.ordine),
+    [hp],
+  );
 
   const openLightbox = (slug: string) => {
     setActiveProject(slug);
@@ -88,7 +98,31 @@ export function Portfolio() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 px-1">
-        {manifest && PROJECTS.map((project, index) => {
+        {managed.length > 0
+          ? managed.map((g, index) => (
+              <motion.a
+                key={g.slug}
+                href={`${BASE}g/${g.slug}/`}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.8, delay: (index % 4) * 0.1 }}
+                className="relative aspect-square cursor-pointer group overflow-hidden bg-muted"
+              >
+                <img
+                  src={`${BASE}g/${g.slug}/cover.webp`}
+                  alt={g.titolo?.[language] ?? g.slug}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 md:p-6">
+                  <span className="text-white text-[10px] md:text-sm tracking-[0.1em] uppercase font-medium leading-tight">
+                    {g.titolo?.[language] ?? g.slug}
+                  </span>
+                </div>
+              </motion.a>
+            ))
+          : manifest && PROJECTS.map((project, index) => {
           const coverImage = manifest[project.slug]?.[0];
           if (!coverImage) return null;
 

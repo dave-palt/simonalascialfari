@@ -42,10 +42,17 @@ jobs:
         run: |
           if git ls-remote --exit-code --heads origin content >/dev/null 2>&1; then
             git fetch origin content
-            git --work-tree=. checkout origin/content -- galleries.json g 2>/dev/null || true
+            # i contenuti del publisher vivono nel branch content — uno per
+            # volta: git checkout fallisce TUTTO se un path manca
+            for item in g p galleries.json homepage.json 404.html .nojekyll; do
+              git --work-tree=. checkout origin/content -- "$item" 2>/dev/null || true
+            done
             # copia i contenuti DENTRO dist (se esistono), sovrascrivendo
             if [ -d g ]; then cp -a g/. dist/; fi
-            if [ -f galleries.json ]; then cp galleries.json dist/; fi
+            if [ -d p ]; then cp -a p/. dist/p/; fi
+            for f in galleries.json homepage.json 404.html .nojekyll; do
+              if [ -f "$f" ]; then cp "$f" dist/; fi
+            done
             echo "contenuti inclusi da branch content"
           else
             echo "branch content assente — deploy solo codice"

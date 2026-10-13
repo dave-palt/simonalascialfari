@@ -93,7 +93,16 @@ const translations = {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
+/** Override runtime dalla homepage gestita (homepage.json): chiave → testo. */
+type TextOverrides = { it?: Record<string, string>; en?: Record<string, string> };
+
+export function I18nProvider({
+  children,
+  overrides,
+}: {
+  children: React.ReactNode;
+  overrides?: TextOverrides;
+}) {
   // SSR-safe: localStorage only exists in the browser. First client render
   // matches the server HTML (default "it"), then the saved preference is
   // applied in an effect to avoid hydration mismatch.
@@ -109,6 +118,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   const t = (key: string) => {
+    // homepage gestita vince (se il valore è testo non vuoto); il resto resta
+    // sui contenuti statici — un campo svuotato dall'admin = testo di default
+    const ov = overrides?.[language]?.[key];
+    if (typeof ov === "string" && ov.length > 0) return ov;
     return translations[language][key as keyof typeof translations["it"]] || key;
   };
 

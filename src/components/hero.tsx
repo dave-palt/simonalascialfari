@@ -1,5 +1,6 @@
 import { useTranslation } from "@/lib/i18n";
 import { useManifest } from "@/hooks/use-manifest";
+import { useHomepageData } from "@/hooks/use-homepage";
 import { BASE } from "@/lib/base";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,11 +16,16 @@ interface MarqueeItem {
   slug: string;
   file: string;
   label: string;
+  /** Galleria gestita: il click apre la galleria invece del lightbox. */
+  href?: string;
+  /** Src completo (cover.webp) per le gallerie gestite. */
+  src?: string;
 }
 
 export function Hero() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { manifest } = useManifest();
+  const { data: hp } = useHomepageData();
   const trackRef = useRef<HTMLDivElement>(null);
   const isPausedRef = useRef(false);
   const resumeTimerRef = useRef<number | null>(null);
@@ -36,6 +42,20 @@ export function Hero() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const marqueeItems = useMemo<MarqueeItem[]>(() => {
+    // homepage gestita: una tessera per galleria visibile (cover del publisher);
+    // il click porta alla galleria /g/<slug>/, non al lightbox
+    const managed = (hp?.gallerie ?? [])
+      .filter((g) => g.visibile)
+      .sort((a, b) => a.ordine - b.ordine);
+    if (managed.length > 0) {
+      return managed.map((g) => ({
+        slug: g.slug,
+        file: "",
+        label: g.titolo?.[language] ?? g.slug,
+        href: `${BASE}g/${g.slug}/`,
+        src: `${BASE}g/${g.slug}/cover.webp`,
+      }));
+    }
     if (!manifest) return [];
     const items: MarqueeItem[] = [];
     const categories = [
@@ -51,7 +71,7 @@ export function Hero() {
       });
     });
     return items;
-  }, [manifest, t]);
+  }, [hp, manifest, t, language]);
 
   const loopItems = useMemo(
     () => [...marqueeItems, ...marqueeItems],
@@ -173,6 +193,12 @@ export function Hero() {
     const drag = dragStateRef.current;
     if (drag && drag.moved > 5) return;
     if (marqueeItems.length === 0) return;
+    const item = marqueeItems[index % marqueeItems.length];
+    if (item.href) {
+      // galleria gestita: naviga alla pagina /g/<slug>/
+      window.location.href = item.href;
+      return;
+    }
     setLightboxIndex(index % marqueeItems.length);
     isPausedRef.current = true;
   };
@@ -303,7 +329,7 @@ export function Hero() {
               >
                 <div className="absolute inset-0 bg-background/10 z-10 transition-colors group-hover:bg-transparent duration-500 pointer-events-none" />
                 <img
-                  src={thumbSrc(item.slug, item.file)}
+                  src={item.src ?? thumbSrc(item.slug, item.file)}
                   alt={item.label}
                   draggable={false}
                   className="w-full h-full object-cover filter grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-[1.02] pointer-events-none"
@@ -357,7 +383,7 @@ export function Hero() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.02 }}
                 transition={{ duration: 0.3 }}
-                src={fullSrc(lightboxItem.slug, lightboxItem.file)}
+                src={lightboxItem.src ?? fullSrc(lightboxItem.slug, lightboxItem.file)}
                 alt={lightboxItem.label}
                 className="max-w-full max-h-full object-contain shadow-2xl"
                 onClick={(e) => e.stopPropagation()}

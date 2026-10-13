@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { BASE } from "@/lib/base";
 import { useDeviceTheme } from "@/hooks/use-device-theme";
+import { useHomepage, HomepageProvider } from "@/hooks/use-homepage";
 
 import { Navbar } from "@/components/navbar";
 import { Hero } from "@/components/hero";
@@ -46,15 +47,20 @@ const ssrHookFor = (path: string) => (() => [path, () => {}]) as any;
 
 function App({ ssrLocation }: { ssrLocation?: string }) {
   useDeviceTheme();
+  // homepage gestita: fetch client-only (il prerender usa i testi statici);
+  // i testi pubblicati diventano override i18n, le gallerie la griglia portfolio
+  const hp = useHomepage();
   const ssrHook = ssrLocation ? ssrHookFor(ssrLocation) : undefined;
   return (
-    <I18nProvider>
-      <WouterRouter base={BASE.replace(/\/$/, "")} hook={ssrHook}>
-        <Router />
-      </WouterRouter>
-      <Toaster position="bottom-center" toastOptions={{
-        style: { background: "hsl(var(--foreground))", color: "hsl(var(--background))", border: "none", borderRadius: 0 }
-      }} />
+    <I18nProvider overrides={hp.data?.testi}>
+      <HomepageProvider value={hp}>
+        <WouterRouter base={BASE.replace(/\/$/, "")} hook={ssrHook}>
+          <Router />
+        </WouterRouter>
+        <Toaster position="bottom-center" toastOptions={{
+          style: { background: "hsl(var(--foreground))", color: "hsl(var(--background))", border: "none", borderRadius: 0 }
+        }} />
+      </HomepageProvider>
     </I18nProvider>
   );
 }
