@@ -167,14 +167,14 @@ export function Portfolio() {
               {/* Navigation Arrows */}
               <button
                 aria-label="Previous image"
-                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-4 text-black hover:opacity-70 transition-opacity"
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-4 text-foreground hover:opacity-70 transition-opacity"
                 onClick={prevImage}
               >
                 <ChevronLeft className="w-12 h-12" strokeWidth={1.5} />
               </button>
               <button
                 aria-label="Next image"
-                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-4 text-black hover:opacity-70 transition-opacity"
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-4 text-foreground hover:opacity-70 transition-opacity"
                 onClick={nextImage}
               >
                 <ChevronRight className="w-12 h-12" strokeWidth={1.5} />

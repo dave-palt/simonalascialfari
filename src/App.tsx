@@ -2,6 +2,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { BASE } from "@/lib/base";
+import { useDeviceTheme } from "@/hooks/use-device-theme";
 
 import { Navbar } from "@/components/navbar";
 import { Hero } from "@/components/hero";
@@ -44,6 +45,7 @@ function Router() {
 const ssrHookFor = (path: string) => (() => [path, () => {}]) as any;
 
 function App({ ssrLocation }: { ssrLocation?: string }) {
+  useDeviceTheme();
   const ssrHook = ssrLocation ? ssrHookFor(ssrLocation) : undefined;
   return (
     <I18nProvider>
