@@ -1,6 +1,7 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { Toaster } from "sonner";
-import { I18nProvider } from "@/lib/i18n";
+import { MotionConfig } from "framer-motion";
+import { I18nProvider, useTranslation } from "@/lib/i18n";
 import { BASE } from "@/lib/base";
 import { useDeviceTheme } from "@/hooks/use-device-theme";
 import { useHomepage, HomepageProvider } from "@/hooks/use-homepage";
@@ -16,10 +17,18 @@ import PrivacyPolicy from "@/pages/privacy";
 import CookiePolicy from "@/pages/cookie";
 
 function Home() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-[100dvh] w-full flex flex-col bg-background">
+      {/* a11y (WCAG 2.4.1): skip link, visibile solo al focus da tastiera */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[200] focus:bg-foreground focus:text-background focus:px-4 focus:py-2 focus:text-xs focus:uppercase focus:tracking-widest"
+      >
+        {t("a11y.skip")}
+      </a>
       <Navbar />
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
         <Hero />
         <About />
         <Portfolio />
@@ -52,16 +61,19 @@ function App({ ssrLocation }: { ssrLocation?: string }) {
   const hp = useHomepage();
   const ssrHook = ssrLocation ? ssrHookFor(ssrLocation) : undefined;
   return (
-    <I18nProvider overrides={hp.data?.testi}>
-      <HomepageProvider value={hp}>
-        <WouterRouter base={BASE.replace(/\/$/, "")} hook={ssrHook}>
-          <Router />
-        </WouterRouter>
-        <Toaster position="bottom-center" toastOptions={{
-          style: { background: "hsl(var(--foreground))", color: "hsl(var(--background))", border: "none", borderRadius: 0 }
-        }} />
-      </HomepageProvider>
-    </I18nProvider>
+    // a11y: le animazioni framer rispettano prefers-reduced-motion
+    <MotionConfig reducedMotion="user">
+      <I18nProvider overrides={hp.data?.testi}>
+        <HomepageProvider value={hp}>
+          <WouterRouter base={BASE.replace(/\/$/, "")} hook={ssrHook}>
+            <Router />
+          </WouterRouter>
+          <Toaster position="bottom-center" toastOptions={{
+            style: { background: "hsl(var(--foreground))", color: "hsl(var(--background))", border: "none", borderRadius: 0 }
+          }} />
+        </HomepageProvider>
+      </I18nProvider>
+    </MotionConfig>
   );
 }
 

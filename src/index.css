@@ -210,6 +210,25 @@
   h1, h2, h3, h4, h5, h6, .font-serif {
     @apply font-serif font-normal;
   }
+  /* a11y (WCAG 2.4.7): ring focus coerente su ogni controllo — il token
+     --ring era definito e mai usato; :where mantiene la specificità a 0 */
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+}
+
+/* a11y (WCAG 2.3.3): motion ridotto — niente scroll smooth, animazioni
+   istantanee (le animazioni JS di framer sono coperte da MotionConfig) */
+@media (prefers-reduced-motion: reduce) {
+  html, body {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

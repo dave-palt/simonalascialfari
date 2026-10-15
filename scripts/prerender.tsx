@@ -24,11 +24,31 @@ const DIST = path.resolve(import.meta.dir, "../dist");
 // Vite env: read it from process.env (set alongside `vite build` in CI).
 const BASE_PREFIX =
   (typeof process !== "undefined" && process.env?.VITE_BASE?.replace(/\/+$/, "")) || "";
-const ROUTES: Array<{ path: string; file: string }> = [
-  { path: "/", file: "index.html" },
-  { path: "/privacy-policy", file: "privacy-policy.html" },
-  { path: "/cookie-policy", file: "cookie-policy.html" },
-  { path: "/404", file: "404.html" },
+const ROUTES: Array<{ path: string; file: string; title: string; description: string }> = [
+  {
+    path: "/",
+    file: "index.html",
+    title: "Simona Lascialfari — Fotografa a Bagno a Ripoli, Firenze",
+    description: "Simona Lascialfari — Fotografa a Bagno a Ripoli (Firenze). Specializzata in ritratto, maternità, danza e fotografia d'interni a Firenze e dintorni.",
+  },
+  {
+    path: "/privacy-policy",
+    file: "privacy-policy.html",
+    title: "Privacy Policy — Simona Lascialfari",
+    description: "Informativa sul trattamento dei dati personali ai sensi del GDPR.",
+  },
+  {
+    path: "/cookie-policy",
+    file: "cookie-policy.html",
+    title: "Cookie Policy — Simona Lascialfari",
+    description: "Informativa sull'uso dei cookie.",
+  },
+  {
+    path: "/404",
+    file: "404.html",
+    title: "Pagina non trovata — Simona Lascialfari",
+    description: "Pagina non trovata.",
+  },
 ];
 
 async function main() {
@@ -74,10 +94,18 @@ async function main() {
     const html = renderToString(
       React.createElement(App, { ssrLocation: BASE_PREFIX + route.path })
     );
-    const out = shell.replace(
+    // a11y/SEO (WCAG 2.4.2): titolo e description per route — la shell è
+    // condivisa, senza queste sostituzioni ogni pagina eredita l'home
+    let out = shell.replace(
       `<div id="root"></div>`,
       `<div id="root">${html}</div>`
     );
+    out = out
+      .replace(/<title>[^<]*<\/title>/, `<title>${route.title}</title>`)
+      .replace(
+        /(<meta name="description" content=")[^"]*(")/,
+        `$1${route.description}$2`
+      );
     await writeFile(path.join(DIST, route.file), out);
     console.log(`prerender: ${route.path} -> dist/${route.file} (${out.length} bytes)`);
   }

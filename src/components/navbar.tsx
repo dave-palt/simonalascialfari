@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 
@@ -14,10 +13,15 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollTo = (id: string) => {
+  // a11y: anchor semantici + focus sulla sezione — scrollIntoView da solo
+  // lascerebbe il focus (e lo screen reader) sulla navbar
+  const scrollTo = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
     const el = document.getElementById(id);
     if (el) {
+      el.setAttribute("tabindex", "-1");
       el.scrollIntoView({ behavior: "smooth" });
+      el.focus({ preventScroll: true });
     }
   };
 
@@ -28,40 +32,46 @@ export function Navbar() {
       }`}
     >
       <div className="flex-1 hidden md:flex items-center gap-6 text-xs tracking-widest uppercase">
-        <button onClick={() => scrollTo("hero")} className="hover:text-foreground/70 transition-colors">
+        <a href="#hero" onClick={(e) => scrollTo(e, "hero")} className="hover:text-foreground/70 transition-colors">
           {t("nav.home")}
-        </button>
-        <button onClick={() => scrollTo("portfolio")} className="hover:text-foreground/70 transition-colors">
+        </a>
+        <a href="#portfolio" onClick={(e) => scrollTo(e, "portfolio")} className="hover:text-foreground/70 transition-colors">
           {t("nav.portfolio")}
-        </button>
+        </a>
       </div>
 
       <div className="flex-1 flex justify-center">
-        <button
-          onClick={() => scrollTo("hero")}
-          className={`font-serif text-lg md:text-xl tracking-[0.25em] text-foreground transition-opacity duration-500 ${scrolled ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        <a
+          href="#hero"
+          onClick={(e) => scrollTo(e, "hero")}
+          className={`font-serif text-lg md:text-xl tracking-[0.25em] text-foreground transition-opacity duration-500 ${
+            // a11y: invisible (non solo opaco) quando nascosto — fuori dal tab order
+            scrolled ? "opacity-100" : "opacity-0 pointer-events-none invisible"
+          }`}
         >
           SIMONA LASCIALFARI
-        </button>
+        </a>
       </div>
 
       <div className="flex-1 hidden md:flex items-center justify-end gap-6 text-xs tracking-widest uppercase">
-        <button onClick={() => scrollTo("about")} className="hover:text-foreground/70 transition-colors">
+        <a href="#about" onClick={(e) => scrollTo(e, "about")} className="hover:text-foreground/70 transition-colors">
           {t("nav.about")}
-        </button>
-        <button onClick={() => scrollTo("contact")} className="hover:text-foreground/70 transition-colors">
+        </a>
+        <a href="#contact" onClick={(e) => scrollTo(e, "contact")} className="hover:text-foreground/70 transition-colors">
           {t("nav.contact")}
-        </button>
+        </a>
         <div className="flex items-center gap-2 ml-4 border-l border-foreground/20 pl-6">
-          <button 
-            className={`transition-colors ${language === "it" ? "text-foreground font-semibold" : "text-foreground/50 hover:text-foreground"}`}
+          <button
+            className={`transition-colors ${language === "it" ? "text-foreground font-semibold" : "text-foreground/70 hover:text-foreground"}`}
+            aria-pressed={language === "it"}
             onClick={() => setLanguage("it")}
           >
             IT
           </button>
-          <span className="text-foreground/20">|</span>
-          <button 
-            className={`transition-colors ${language === "en" ? "text-foreground font-semibold" : "text-foreground/50 hover:text-foreground"}`}
+          <span aria-hidden="true" className="text-foreground/20">|</span>
+          <button
+            className={`transition-colors ${language === "en" ? "text-foreground font-semibold" : "text-foreground/70 hover:text-foreground"}`}
+            aria-pressed={language === "en"}
             onClick={() => setLanguage("en")}
           >
             EN
@@ -71,15 +81,17 @@ export function Navbar() {
 
       <div className="md:hidden flex items-center">
          <div className="flex items-center gap-2 text-xs tracking-widest">
-          <button 
-            className={`${language === "it" ? "text-foreground font-semibold" : "text-foreground/50"}`}
+          <button
+            className={`${language === "it" ? "text-foreground font-semibold" : "text-foreground/70"}`}
+            aria-pressed={language === "it"}
             onClick={() => setLanguage("it")}
           >
             IT
           </button>
-          <span className="text-foreground/20">|</span>
-          <button 
-            className={`${language === "en" ? "text-foreground font-semibold" : "text-foreground/50"}`}
+          <span aria-hidden="true" className="text-foreground/20">|</span>
+          <button
+            className={`${language === "en" ? "text-foreground font-semibold" : "text-foreground/70"}`}
+            aria-pressed={language === "en"}
             onClick={() => setLanguage("en")}
           >
             EN

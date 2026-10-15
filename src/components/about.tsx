@@ -3,7 +3,7 @@ import { BASE } from "@/lib/base";
 import { motion } from "framer-motion";
 
 export function About() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   // ritratto del Chi sono: asset del sito (non un derivato galleria —
   // quelle ora vivono cifrate nel publisher, con solo cover.webp in chiaro)
@@ -23,7 +23,7 @@ export function About() {
           {portraitImage && (
             <img 
               src={portraitImage} 
-              alt="Simona Lascialfari" 
+              alt={language === "it" ? "Ritratto di Simona Lascialfari" : "Portrait of Simona Lascialfari"} 
               className="w-full h-full object-cover filter grayscale"
               loading="lazy"
             />

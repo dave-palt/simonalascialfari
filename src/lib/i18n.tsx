@@ -44,6 +44,18 @@ const translations = {
     "form.submit": "INVIA MESSAGGIO",
     "form.success": "Messaggio inviato con successo. Ti risponderò al più presto.",
     "form.error": "Invio non riuscito. Riprova o scrivimi direttamente via email.",
+    "form.sending": "Invio…",
+    "form.err.name": "Inserisci il nome (minimo 2 caratteri)",
+    "form.err.email": "Indirizzo email non valido",
+    "form.err.message": "Il messaggio è troppo corto (minimo 10 caratteri)",
+    "form.err.privacy": "Devi accettare la Privacy Policy",
+    "a11y.skip": "Salta al contenuto",
+    "a11y.close": "Chiudi",
+    "a11y.prev": "Foto precedente",
+    "a11y.next": "Foto successiva",
+    "a11y.pause": "Pausa scorrimento",
+    "a11y.play": "Riprendi scorrimento",
+    "a11y.marquee": "Carosello fotografico",
     "contact.or": "OPPURE",
     "footer.rights": "© 2026 Simona Lascialfari — Tutti i diritti riservati",
     "footer.privacy": "Privacy Policy",
@@ -84,6 +96,18 @@ const translations = {
     "form.submit": "SEND MESSAGE",
     "form.success": "Message sent successfully. I will get back to you soon.",
     "form.error": "Sending failed. Please try again or email me directly.",
+    "form.sending": "Sending…",
+    "form.err.name": "Enter your name (at least 2 characters)",
+    "form.err.email": "Invalid email address",
+    "form.err.message": "Message is too short (at least 10 characters)",
+    "form.err.privacy": "You must accept the Privacy Policy",
+    "a11y.skip": "Skip to content",
+    "a11y.close": "Close",
+    "a11y.prev": "Previous photo",
+    "a11y.next": "Next photo",
+    "a11y.pause": "Pause slideshow",
+    "a11y.play": "Resume slideshow",
+    "a11y.marquee": "Photo carousel",
     "contact.or": "OR",
     "footer.rights": "© 2026 Simona Lascialfari — All rights reserved",
     "footer.privacy": "Privacy Policy",
@@ -115,6 +139,12 @@ export function I18nProvider({
 
   useEffect(() => {
     try { localStorage.setItem("lang", language); } catch {}
+  }, [language]);
+
+  // a11y (WCAG 3.1.2): la voce dello screen reader segue la lingua attiva.
+  // Effect-only → SSR-safe (il primo render resta "it" come la shell prerender).
+  useEffect(() => {
+    document.documentElement.lang = language;
   }, [language]);
 
   const t = (key: string) => {

@@ -11,6 +11,11 @@ export default function CookiePolicy() {
     window.scrollTo(0, 0);
   }, []);
 
+  // a11y/SEO (WCAG 2.4.2): titolo specifico di route (uguale in IT/EN)
+  useEffect(() => {
+    document.title = "Cookie Policy — Simona Lascialfari";
+  }, []);
+
   const content = language === "it" ? IT : EN;
 
   return (

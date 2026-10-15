@@ -11,6 +11,11 @@ export default function PrivacyPolicy() {
     window.scrollTo(0, 0);
   }, []);
 
+  // a11y/SEO (WCAG 2.4.2): titolo specifico di route (uguale in IT/EN)
+  useEffect(() => {
+    document.title = "Privacy Policy — Simona Lascialfari";
+  }, []);
+
   const content = language === "it" ? IT : EN;
 
   return (
