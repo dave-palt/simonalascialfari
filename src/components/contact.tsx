@@ -6,26 +6,34 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
+import { useMemo } from "react";
 
-const formSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  location: z.string().optional(),
-  message: z.string().min(10, "Message is too short"),
-  privacy: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the privacy policy" }),
-  }),
-  company: z.string().max(0).optional(), // honeypot: must stay empty
-});
+// a11y: i messaggi di validazione seguono la lingua attiva (prima erano
+// hardcoded in inglese su UI italiana). Factory → lo schema si ricostruisce
+// al cambio lingua; il tipo resta stabile per useForm.
+const makeSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(2, t("form.err.name")),
+    email: z.string().email(t("form.err.email")),
+    phone: z.string().optional(),
+    location: z.string().optional(),
+    message: z.string().min(10, t("form.err.message")),
+    privacy: z.literal(true, {
+      errorMap: () => ({ message: t("form.err.privacy") }),
+    }),
+    company: z.string().max(0).optional(), // honeypot: must stay empty
+  });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof makeSchema>>;
 
 export function Contact() {
-  const { t } = useTranslation();
-  
+  const { t, language } = useTranslation();
+
+  // t cambia identità a ogni render: la dipendenza vera è la lingua
+  const schema = useMemo(() => makeSchema(t), [language]);
+
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(schema),
   });
   const privacyChecked = watch("privacy");
 
@@ -56,6 +64,10 @@ export function Contact() {
     }
   };
 
+  const inputClasses =
+    "w-full bg-transparent border-b border-border/50 py-3 text-foreground focus:outline-none focus:border-foreground transition-colors font-serif text-lg";
+  const labelClasses = "text-[10px] tracking-widest uppercase text-foreground/70";
+
   return (
     <section id="contact" className="py-24 md:py-40 px-6 md:px-12 max-w-4xl mx-auto bg-background text-foreground">
       <motion.div
@@ -77,7 +89,7 @@ export function Contact() {
         viewport={{ once: true }}
         transition={{ duration: 0.8, delay: 0.2 }}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-8">
           {/* honeypot anti-spam: hidden from users, bots fill it */}
           <input
             type="text"
@@ -91,62 +103,81 @@ export function Contact() {
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
-              <label className="text-[10px] tracking-widest uppercase text-foreground/60">{t("form.name")}</label>
-              <input 
-                {...register("name")} 
-                className="w-full bg-transparent border-b border-border/50 py-3 text-foreground focus:outline-none focus:border-foreground transition-colors font-serif text-lg"
+              <label htmlFor="cf-name" className={labelClasses}>{t("form.name")}</label>
+              <input
+                id="cf-name"
+                autoComplete="name"
+                {...register("name")}
+                aria-invalid={errors.name ? "true" : undefined}
+                aria-describedby={errors.name ? "cf-name-err" : undefined}
+                className={inputClasses}
               />
-              {errors.name && <span className="text-accent text-xs">{errors.name.message}</span>}
+              {errors.name && <span id="cf-name-err" role="alert" className="text-accent text-xs">{errors.name.message}</span>}
             </div>
-            
+
             <div className="space-y-2">
-              <label className="text-[10px] tracking-widest uppercase text-foreground/60">{t("form.email")}</label>
-              <input 
-                {...register("email")} 
+              <label htmlFor="cf-email" className={labelClasses}>{t("form.email")}</label>
+              <input
+                id="cf-email"
                 type="email"
-                className="w-full bg-transparent border-b border-border/50 py-3 text-foreground focus:outline-none focus:border-foreground transition-colors font-serif text-lg"
+                autoComplete="email"
+                {...register("email")}
+                aria-invalid={errors.email ? "true" : undefined}
+                aria-describedby={errors.email ? "cf-email-err" : undefined}
+                className={inputClasses}
               />
-              {errors.email && <span className="text-accent text-xs">{errors.email.message}</span>}
+              {errors.email && <span id="cf-email-err" role="alert" className="text-accent text-xs">{errors.email.message}</span>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
-              <label className="text-[10px] tracking-widest uppercase text-foreground/60">{t("form.phone")}</label>
+              <label htmlFor="cf-phone" className={labelClasses}>{t("form.phone")}</label>
               <input
-                {...register("phone")}
+                id="cf-phone"
                 type="tel"
-                className="w-full bg-transparent border-b border-border/50 py-3 text-foreground focus:outline-none focus:border-foreground transition-colors font-serif text-lg"
+                autoComplete="tel"
+                {...register("phone")}
+                className={inputClasses}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] tracking-widest uppercase text-foreground/60">{t("form.location")}</label>
+              <label htmlFor="cf-location" className={labelClasses}>{t("form.location")}</label>
               <input
+                id="cf-location"
+                autoComplete="off"
                 {...register("location")}
-                className="w-full bg-transparent border-b border-border/50 py-3 text-foreground focus:outline-none focus:border-foreground transition-colors font-serif text-lg"
+                className={inputClasses}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] tracking-widest uppercase text-foreground/60">{t("form.message")}</label>
-            <textarea 
-              {...register("message")} 
+            <label htmlFor="cf-message" className={labelClasses}>{t("form.message")}</label>
+            <textarea
+              id="cf-message"
               rows={4}
-              className="w-full bg-transparent border-b border-border/50 py-3 text-foreground focus:outline-none focus:border-foreground transition-colors font-serif text-lg resize-none"
+              {...register("message")}
+              aria-invalid={errors.message ? "true" : undefined}
+              aria-describedby={errors.message ? "cf-message-err" : undefined}
+              className={`${inputClasses} resize-none`}
             />
-            {errors.message && <span className="text-accent text-xs">{errors.message.message}</span>}
+            {errors.message && <span id="cf-message-err" role="alert" className="text-accent text-xs">{errors.message.message}</span>}
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-4">
             <div className="flex flex-col gap-1">
               <label className="flex items-center gap-3 cursor-pointer group select-none">
-                <div className="relative flex items-center justify-center w-4 h-4 border border-foreground/40 group-hover:border-foreground transition-colors">
-                  <input
-                    type="checkbox"
-                    {...register("privacy")}
-                    className="opacity-0 absolute inset-0 cursor-pointer"
-                  />
+                {/* a11y: checkbox nativa in sr-only (focusabile, annunciata);
+                    il box custom evidenzia il focus via peer-focus-visible */}
+                <input
+                  type="checkbox"
+                  {...register("privacy")}
+                  className="peer sr-only"
+                  aria-invalid={errors.privacy ? "true" : undefined}
+                  aria-describedby={errors.privacy ? "cf-privacy-err" : undefined}
+                />
+                <div className="relative flex items-center justify-center w-4 h-4 border border-foreground/40 group-hover:border-foreground transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[hsl(var(--ring))]">
                   <motion.div
                     initial={false}
                     animate={{ scale: privacyChecked ? 1 : 0 }}
@@ -154,7 +185,7 @@ export function Contact() {
                     className="w-2 h-2 bg-foreground"
                   />
                 </div>
-                <span className="text-xs uppercase tracking-widest text-foreground/60 group-hover:text-foreground transition-colors">
+                <span className="text-xs uppercase tracking-widest text-foreground/70 group-hover:text-foreground transition-colors">
                   {t("form.privacy.prefix")}{" "}
                   <Link
                     href="/privacy-policy"
@@ -165,25 +196,26 @@ export function Contact() {
                   </Link>
                 </span>
               </label>
-              {errors.privacy && <span className="text-accent text-xs">{errors.privacy.message}</span>}
+              {errors.privacy && <span id="cf-privacy-err" role="alert" className="text-accent text-xs">{errors.privacy.message}</span>}
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSubmitting}
+              aria-busy={isSubmitting}
               className="text-xs uppercase tracking-widest bg-foreground text-background px-8 py-4 hover:bg-foreground/90 transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? "..." : t("form.submit")}
+              {isSubmitting ? t("form.sending") : t("form.submit")}
             </button>
           </div>
         </form>
 
         <div className="mt-24 pt-24 border-t border-border/30 text-center">
-          <span className="text-[10px] tracking-[0.3em] uppercase text-foreground/40 block mb-12 relative">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-foreground/70 block mb-12 relative">
             <span className="bg-background px-4 relative z-10">{t("contact.or")}</span>
             <div className="absolute top-1/2 left-0 right-0 h-px bg-border/30 -z-0" />
           </span>
-          
+
           <div className="space-y-4 font-serif text-lg md:text-xl text-foreground/80">
             <p className="font-semibold text-foreground">Simona Lascialfari</p>
             <p><a href="mailto:simona.lascialfari.305@gmail.com" className="hover:text-accent transition-colors">simona.lascialfari.305@gmail.com</a></p>
@@ -208,7 +240,7 @@ export function Contact() {
             </p>
           </div>
 
-          <div className="mt-12 space-y-1 text-[10px] tracking-widest uppercase text-foreground/40 font-sans">
+          <div className="mt-12 space-y-1 text-[10px] tracking-widest uppercase text-foreground/70 font-sans">
             <p>Via di Montauto 3 — 50012 — Bagno a Ripoli (FI)</p>
             <p>C.F. LSCSMN94E70D612M</p>
           </div>
