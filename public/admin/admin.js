@@ -508,7 +508,8 @@ function humanLoginError(e) {
   const m = String((e && e.message) || e);
   console.warn("[login]", m); // dettaglio tecnico solo in console
   if (/^401/.test(m) || /unauthorized/i.test(m)) return "Sessione scaduta o non valida — accedi di nuovo con GitHub.";
-  if (/^403/.test(m) || /forbidden/i.test(m)) return "Accesso negato: questo account GitHub non è autorizzato.";
+  if (/^403/.test(m) || /forbidden/i.test(m)) return "Accesso negato: questo account GitHub non è tra i collaboratori autorizzati del sito. Servono i permessi di collaborazione sulla repo — chiedili a chi gestisce il sito, poi riprova con «Accedi con GitHub».";
+  if (/^503/.test(m) || /unreachable/i.test(m)) return "GitHub al momento non risponde — aspetta un attimo e riprova con «Accedi con GitHub».";
   if (/network|Failed to fetch/i.test(m)) return "Server non raggiungibile — controlla la connessione e riprova.";
   return "Accesso non riuscito — riprova con «Accedi con GitHub».";
 }
