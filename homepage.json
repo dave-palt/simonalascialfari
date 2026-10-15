@@ -107,15 +107,6 @@
         "it": "Interni — B&B Porto Ercole",
         "en": "Interiors — B&B Porto Ercole"
       }
-    },
-    {
-      "slug": "fotografia",
-      "visibile": true,
-      "ordine": 10,
-      "titolo": {
-        "it": "Fotografia",
-        "en": "Fotografia"
-      }
     }
   ],
   "seo": {
