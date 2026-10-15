@@ -1,8 +1,10 @@
 # admin-ui — sorgente dell'interfaccia admin (D25)
 
-File statici veri (nessun bundler): `admin.html` + `admin.css` + `admin.js` +
+File statici veri (nessun bundler): `index.html` + `admin.css` + `admin.js` +
 `dropbox.js` (+ favicon). Estratti il 2026-10-15 dalle TS template string
 `src/admin.ts`/`src/adminDropbox.ts` (ora rimosse) tramite output servito.
+La pagina si chiama `index.html` (NON admin.html): Pages serve la directory
+solo da index.html.
 
 - Serviti dal publisher a `/admin/*` (dev + fallback) e pubblicati sul sito
   (gh-pages, `public/admin/`) via `scripts/publish-admin-ui.sh` (git subtree).
