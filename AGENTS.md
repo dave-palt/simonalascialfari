@@ -49,12 +49,30 @@ Il drag-scroll dello slider usa **capture ritardato**: niente `setPointerCapture
 
 - `sources/photos/` NON è nel repo: senza link-photos il gen-manifest locale esce con errore (in CI, coi derivati committati, exit 0 — voluto).
 - `vite build` + prerender sovrascrivono `dist/`: artefatto rigenerabile, non editare a mano.
-- Il Worker ha rate limit 10 req/10 min per IP (binding `RATE_LIMITER`) e CORS verso `SITE_ORIGIN` soltanto (oggi punta al dominio .com — da aggiornare a github.io quando si deploya).
+- Il Worker ha rate limit 10 req/60s per IP (binding `RATE_LIMITER`) e CORS verso `SITE_ORIGIN` soltanto (`worker/wrangler.toml`, in modalità demo punta a github.io — allo swap dominio va messo `https://simonalascialfari.com`, v. «Swap dominio»).
 - `wouter/memory-location` NON funziona in SSR (`useSyncExternalStore` senza `getServerSnapshot`): usare l'hook statico già presente in `App.tsx`.
 - Commit: solo i file del task, mai `git add -A` (le foto in sources finirebbero nel commit); i derivati si aggiungono esplicitamente.
 
 ## Deploy
 
-Push su `main` → CI (install → typecheck → build con `VITE_BASE=/<repo>/` automatico → peaceiris su `gh-pages` con `force_orphan`). Demo: https://dave-palt.github.io/simonalascialfari/ . Nota CDN: dopo un push, l'index.html servito può restare stantio ~10 min (Fastly) — per verificare subito l'artefatto usare `raw.githubusercontent.com/<repo>/gh-pages/`.
+Push su `main` → CI (install → typecheck → build → peaceiris su `gh-pages` con `force_orphan`). La build legge le **variabili repo** (default demo in parentesi): `VITE_CONTACT_ENDPOINT` (—), `VITE_BASE` (`/<repo>/` derivato dal nome repo), `VITE_GOOGLE_SITE_VERIFICATION` (token Search Console demo), `CNAME_DOMAIN` (assente = nessun CNAME). Demo: https://dave-palt.github.io/simonalascialfari/ . Nota CDN: dopo un push, l'index.html servito può restare stantio ~10 min (Fastly) — per verificare subito l'artefatto usare `raw.githubusercontent.com/<repo>/gh-pages/`.
 
 Worker contatti (differito): deploy su account Cloudflare **di Simona** (mai Dave), `wrangler secret put RESEND_API_KEY` (la chiave vive SOLO lì, mai su GitHub), poi `gh variable set VITE_CONTACT_ENDPOINT --body <url-worker>/api/contact`. Runbook: appendice del piano in `<workspace>/.hermes/plans/2026-10-08_180329-fase0-github-pages.md` (workspace = padre di `simona-infra`).
+
+## Swap dominio (go-live su simonalascialfari.com)
+
+Nessun URL è hardcodato nel codice: tutto passa da env/variabili repo. Checklist in ordine:
+
+1. **DNS**: nel registrar/CF di Simona, `simonalascialfari.com` → GitHub Pages (A records `185.199.108-111.153` + CNAME `www` → `dave-palt.github.io`), poi nel repo Settings → Pages → custom domain `simonalascialfari.com` + enforce HTTPS.
+2. **Variabili repo sito** (nessun commit richiesto, poi ri-lanciare il workflow `deploy` — le variabili NON triggerano `on: push`):
+   ```sh
+   gh variable set VITE_BASE --body /                       # base asset da /<repo>/ a /
+   gh variable set CNAME_DOMAIN --body simonalascialfari.com
+   gh variable set VITE_GOOGLE_SITE_VERIFICATION --body <token-nuova-verifica-Search-Console>
+   gh workflow run deploy.yml
+   ```
+3. **Worker contatti**: in `worker/wrangler.toml` → `SITE_ORIGIN = "https://simonalascialfari.com"` (+ `CONTACT_FROM`/`CONTACT_TO` prod, già annotati nel file) → `npm run worker:deploy`.
+4. **Publisher (VM)**: in `/srv/simona/secrets/env` → `PUB_SITE_URL=https://simonalascialfari.com` e `PUBLISHER_ALLOWED_ORIGINS` col nuovo dominio (CORS viewer `/p/`), riavvio servizio. La sitemap si rigenera da sola al primo publish; **robots.txt/llms.txt salvati nell'admin contengono il vecchio URL assoluto** → ri-salvarli dalla tab Homepage (i default proposti seguono il nuovo `PUB_SITE_URL`).
+5. Redirect 301 dal vecchio `dave-palt.github.io/simonalascialfari/`: automatico (GitHub redirige le project pages col CNAME attivo); i link `/g/<slug>/` restano validi perché il path base cambia ma gli slug no.
+
+Dettagli env del publisher: `docs/RUNBOOK-SELFHOST.md` nella repo infra.

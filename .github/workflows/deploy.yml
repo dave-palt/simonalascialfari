@@ -36,7 +36,12 @@ jobs:
         run: npm run build
         env:
           VITE_CONTACT_ENDPOINT: ${{ vars.VITE_CONTACT_ENDPOINT }}
-          VITE_BASE: "/${{ github.event.repository.name }}/"
+          # Demo su project page: base /<repo>/. Allo swap del dominio custom
+          # (simonalascialfari.com): `gh variable set VITE_BASE --body /` — la
+          # variabile repo HA precedenza sul default derivato dal nome repo.
+          VITE_BASE: ${{ vars.VITE_BASE || format('/{0}/', github.event.repository.name) }}
+          # Token Search Console del dominio corrente (nuova verifica allo swap).
+          VITE_GOOGLE_SITE_VERIFICATION: ${{ vars.VITE_GOOGLE_SITE_VERIFICATION || '2x3LH3iVJFzE-hY_Y30aD7fmQPmM3oud4Bd67-7dB_U' }}
 
       - name: Assemble content (D19)
         run: |
@@ -64,6 +69,14 @@ jobs:
           else
             echo "branch content assente — deploy solo codice"
           fi
+
+      # Custom domain: peaceiris rifà il branch force_orphan a ogni deploy,
+      # quindi il CNAME va rigenerato DENTRO dist a ogni build. Allo swap:
+      #   gh variable set CNAME_DOMAIN --body simonalascialfari.com
+      # (variabile vuota/assente = nessun CNAME, project page demo invariata.)
+      - name: Custom domain CNAME (se configurato)
+        if: vars.CNAME_DOMAIN != ''
+        run: echo "${{ vars.CNAME_DOMAIN }}" > ./dist/CNAME
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
