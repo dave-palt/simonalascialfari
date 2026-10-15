@@ -5,6 +5,7 @@ import { BASE } from "@/lib/base";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import type { HomepageGallery } from "@/lib/homepage";
 
 // Originals (full-res webp) in the lightbox; thumbnails in the grid
@@ -52,6 +53,12 @@ export function Portfolio() {
   };
 
   const activeImages = activeProject && manifest ? manifest[activeProject] || [] : [];
+
+  // a11y: label del progetto attivo (header del lightbox + alt immagine)
+  const activeLabel = t(PROJECTS.find((p) => p.slug === activeProject)?.labelKey || "");
+
+  // a11y (WCAG 2.4.3): dialog con focus trap + ripristino del focus alla chiusura
+  const lbRef = useFocusTrap<HTMLDivElement>(!!activeProject);
 
   const nextImage = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -127,18 +134,20 @@ export function Portfolio() {
           if (!coverImage) return null;
 
           return (
-            <motion.div
+            <motion.button
               key={project.slug}
+              type="button"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.8, delay: (index % 4) * 0.1 }}
-              className="relative aspect-square cursor-pointer group overflow-hidden bg-muted"
               onClick={() => openLightbox(project.slug)}
+              aria-label={t(project.labelKey)}
+              className="relative aspect-square cursor-pointer group overflow-hidden bg-muted text-left border-0 p-0"
             >
               <img
                 src={thumbSrc(project.slug, coverImage)}
-                alt={t(project.labelKey)}
+                alt=""
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 loading="lazy"
               />
@@ -147,7 +156,7 @@ export function Portfolio() {
                   {t(project.labelKey)}
                 </span>
               </div>
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>
@@ -156,6 +165,10 @@ export function Portfolio() {
       <AnimatePresence>
         {activeProject && (
           <motion.div
+            ref={lbRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeLabel}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -168,14 +181,15 @@ export function Portfolio() {
             {/* Header */}
             <div className="absolute top-0 w-full p-6 flex justify-between items-center z-10">
               <span className="text-xs tracking-widest uppercase text-foreground/70">
-                {t(PROJECTS.find(p => p.slug === activeProject)?.labelKey || "")}
+                {activeLabel}
               </span>
               <div className="flex items-center gap-6">
                 <span className="text-xs font-mono text-foreground/50">
                   {currentImageIndex + 1} / {activeImages.length}
                 </span>
-                <button 
+                <button
                   onClick={closeLightbox}
+                  aria-label={t("a11y.close")}
                   className="p-2 hover:bg-foreground/5 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5 text-foreground/70" />
@@ -193,6 +207,7 @@ export function Portfolio() {
                   exit={{ opacity: 0, scale: 1.02 }}
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   src={fullSrc(activeProject, activeImages[currentImageIndex])}
+                  alt={`${activeLabel} — ${currentImageIndex + 1} di ${activeImages.length}`}
                   className="max-w-full max-h-full object-contain shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -200,14 +215,14 @@ export function Portfolio() {
 
               {/* Navigation Arrows */}
               <button
-                aria-label="Previous image"
+                aria-label={t("a11y.prev")}
                 className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-4 text-foreground hover:opacity-70 transition-opacity"
                 onClick={prevImage}
               >
                 <ChevronLeft className="w-12 h-12" strokeWidth={1.5} />
               </button>
               <button
-                aria-label="Next image"
+                aria-label={t("a11y.next")}
                 className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-4 text-foreground hover:opacity-70 transition-opacity"
                 onClick={nextImage}
               >
