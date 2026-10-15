@@ -13,7 +13,11 @@ export function useHomepage(): HomepageState {
 
   useEffect(() => {
     let dead = false;
-    fetch(`${BASE}homepage.json`, { cache: "no-cache" })
+    // Nessuna cache option qui: "no-cache" fa IGNORARE la entry della
+    // <link rel="preload"> e scarica due volte il JSON. Col default la fetch
+    // consuma il preload; la freschezza resta garantita da max-age=600 di
+    // GH Pages (lo stesso ritardo che il CDN Fastly applica comunque).
+    fetch(`${BASE}homepage.json`, { credentials: "omit" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j: unknown) => {
         if (dead) return;

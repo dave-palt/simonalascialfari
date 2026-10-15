@@ -56,6 +56,15 @@ async function main() {
     .map((url) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="${url}">`)
     .join("");
   shell = shell.replace(linkTag[0], `${fontPreloads}<style>${css}</style>`);
+  // Preload homepage.json (overlay gestito dal publisher): senza questo link
+  // la fetch parte solo dopo il parse del bundle JS (useEffect in use-homepage);
+  // col preload scarica in parallelo al JS e la cascata HTML→JS→JSON→cover
+  // perde un anello. La fetch runtime usa credentials:"omit" per matchare
+  // questa preload entry (anonima).
+  shell = shell.replace(
+    "</title>",
+    `</title>\n    <link rel="preload" as="fetch" crossorigin href="${BASE_PREFIX}/homepage.json">`
+  );
   await rm(path.join(DIST, cssRel));
   console.log(
     `prerender: css inline (${css.length} bytes) + ${fontPreloads ? "preload font latin" : "nessun preload font"}`
