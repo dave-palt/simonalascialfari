@@ -4,7 +4,8 @@ import { useHomepageData } from "@/hooks/use-homepage";
 import { BASE } from "@/lib/base";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 // WebP thumbnails in the marquee; full-res webp in the lightbox
 const fullSrc = (slug: string, file: string) =>
@@ -16,6 +17,8 @@ interface MarqueeItem {
   slug: string;
   file: string;
   label: string;
+  /** Nome accessibile unico della tessera (alt/link announcement). */
+  name: string;
   /** Galleria gestita: il click apre la galleria invece del lightbox. */
   href?: string;
   /** Src completo (cover.webp) per le gallerie gestite. */
@@ -41,6 +44,12 @@ export function Hero() {
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
+  // a11y (WCAG 2.2.2): auto-scroll del marquee disattivabile dall'utente.
+  // Il ref accompagna lo stato: il tick del rAF legge il ref, così il toggle
+  // non deve ricreare il loop (e non azzera la posizione virtuale).
+  const [autoScroll, setAutoScroll] = useState(true);
+  const autoScrollRef = useRef(true);
+
   const marqueeItems = useMemo<MarqueeItem[]>(() => {
     // homepage gestita: una tessera per galleria visibile (cover del publisher);
     // il click porta alla galleria /g/<slug>/, non al lightbox
@@ -52,6 +61,7 @@ export function Hero() {
         slug: g.slug,
         file: "",
         label: g.titolo?.[language] ?? g.slug,
+        name: g.titolo?.[language] ?? g.slug,
         href: `${BASE}g/${g.slug}/`,
         src: `${BASE}g/${g.slug}/cover.webp`,
       }));
@@ -66,8 +76,16 @@ export function Hero() {
     ];
     categories.forEach((cat) => {
       const files = manifest[cat.slug] || [];
-      files.slice(0, 4).forEach((file) => {
-        items.push({ slug: cat.slug, file, label: t(cat.labelKey) });
+      const shown = files.slice(0, 4);
+      shown.forEach((file, idx) => {
+        const label = t(cat.labelKey);
+        items.push({
+          slug: cat.slug,
+          file,
+          label,
+          // a11y: nome unico per tessera (l'alt "Danza" x4 era ambiguo)
+          name: `${label} — foto ${idx + 1} di ${shown.length}`,
+        });
       });
     });
     return items;
@@ -81,6 +99,8 @@ export function Hero() {
   // Auto-scroll loop
   useEffect(() => {
     if (loopItems.length === 0) return;
+    // a11y (WCAG 2.3.3): niente auto-scroll se l'utente chiede motion ridotto
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const el = trackRef.current;
     if (!el) return;
 
@@ -98,7 +118,7 @@ export function Hero() {
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
-      if (!isPausedRef.current && el.scrollWidth > el.clientWidth) {
+      if (!isPausedRef.current && autoScrollRef.current && el.scrollWidth > el.clientWidth) {
         const half = el.scrollWidth / 2;
         virtual += speed * dt;
         if (virtual >= half) virtual -= half;
@@ -236,6 +256,9 @@ export function Hero() {
 
   const lightboxOpen = lightboxIndex !== null && marqueeItems.length > 0;
 
+  // a11y (WCAG 2.4.3): dialog con focus trap + ripristino del focus alla chiusura
+  const lbRef = useFocusTrap<HTMLDivElement>(lightboxOpen);
+
   useEffect(() => {
     if (!lightboxOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -296,11 +319,21 @@ export function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.5, delay: 0.6 }}
-        className="w-full py-12 md:py-24"
+        className="w-full py-12 md:py-24 relative"
       >
         {loopItems.length > 0 && (
           <div
             ref={trackRef}
+            role="region"
+            aria-label={t("a11y.marquee")}
+            onFocus={() => {
+              // a11y: l'elemento focusato non deve scappare via col scroll
+              isPausedRef.current = true;
+            }}
+            onBlur={(e) => {
+              const rt = e.relatedTarget as Node | null;
+              if (!rt || !e.currentTarget.contains(rt)) pauseAndScheduleResume();
+            }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={endDrag}
@@ -321,34 +354,74 @@ export function Hero() {
               touchAction: "pan-x pan-y",
             }}
           >
-            {loopItems.map((item, i) => (
-              <div
-                key={i}
-                onClick={() => handleItemClick(i % marqueeItems.length)}
-                className="relative flex-none w-48 md:w-72 h-72 md:h-96 mx-2 md:mx-4 group"
-              >
-                <div className="absolute inset-0 bg-background/10 z-10 transition-colors group-hover:bg-transparent duration-500 pointer-events-none" />
-                <img
-                  src={item.src ?? thumbSrc(item.slug, item.file)}
-                  alt={item.label}
-                  draggable={false}
-                  className="w-full h-full object-cover filter grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-[1.02] pointer-events-none"
-                  loading={i < 8 ? "eager" : "lazy"}
-                />
-                <div className="absolute bottom-4 left-4 z-20 overflow-hidden pointer-events-none">
-                  <span className="text-xs uppercase tracking-widest text-background bg-foreground/60 backdrop-blur-sm px-3 py-1 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 block">
-                    {item.label}
-                  </span>
-                </div>
-              </div>
-            ))}
+            {loopItems.map((item, i) => {
+              // a11y (WCAG 2.1.1): elementi nativi — <a> per le gallerie
+              // gestite, <button> per il lightbox. L'img è decorativa: il
+              // nome accessibile vive sul controllo (no doppio annuncio).
+              // Le tessere oltre la metà sono CLONI del loop infinito:
+              // nascosti all'albero accessibile e fuori dal tab order.
+              const isClone = i >= marqueeItems.length;
+              const tileClasses =
+                "relative flex-none w-48 md:w-72 h-72 md:h-96 mx-2 md:mx-4 group text-left bg-transparent border-0 p-0 cursor-pointer";
+              const onTileClick = () => handleItemClick(i % marqueeItems.length);
+              const inner = (
+                <>
+                  <div className="absolute inset-0 bg-background/10 z-10 transition-colors group-hover:bg-transparent duration-500 pointer-events-none" />
+                  <img
+                    src={item.src ?? thumbSrc(item.slug, item.file)}
+                    alt=""
+                    draggable={false}
+                    className="w-full h-full object-cover filter grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-[1.02] pointer-events-none"
+                    loading={i < 8 ? "eager" : "lazy"}
+                  />
+                  <div className="absolute bottom-4 left-4 z-20 overflow-hidden pointer-events-none">
+                    <span className="text-xs uppercase tracking-widest text-background bg-foreground/60 backdrop-blur-sm px-3 py-1 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 block">
+                      {item.label}
+                    </span>
+                  </div>
+                </>
+              );
+              const a11yProps = isClone
+                ? { "aria-hidden": true as const, tabIndex: -1 }
+                : { "aria-label": item.name };
+              return item.href ? (
+                <a key={i} href={item.href} onClick={onTileClick} className={tileClasses} {...a11yProps}>
+                  {inner}
+                </a>
+              ) : (
+                <button key={i} type="button" onClick={onTileClick} className={tileClasses} {...a11yProps}>
+                  {inner}
+                </button>
+              );
+            })}
           </div>
+        )}
+        {/* a11y (WCAG 2.2.2): pausa dello scorrimento automatico, raggiungibile
+            da tastiera — l'auto-pausa su hover/focus da sola non basta */}
+        {loopItems.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const v = !autoScrollRef.current;
+              autoScrollRef.current = v;
+              setAutoScroll(v);
+            }}
+            aria-label={autoScroll ? t("a11y.pause") : t("a11y.play")}
+            aria-pressed={!autoScroll}
+            className="absolute bottom-2 right-2 z-30 p-2 text-foreground/50 hover:text-foreground"
+          >
+            {autoScroll ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
         )}
       </motion.div>
 
       <AnimatePresence>
         {lightboxItem && (
           <motion.div
+            ref={lbRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${lightboxItem.label} — ${(lightboxIndex ?? 0) + 1}/${marqueeItems.length}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -368,7 +441,7 @@ export function Hero() {
                 </span>
                 <button
                   onClick={closeLightbox}
-                  aria-label="Close"
+                  aria-label={t("a11y.close")}
                   className="p-2 text-foreground/70 hover:text-foreground transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -391,14 +464,14 @@ export function Hero() {
             </AnimatePresence>
 
             <button
-              aria-label="Previous image"
+              aria-label={t("a11y.prev")}
               onClick={showPrev}
               className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 p-3 md:p-4 text-foreground/70 hover:text-foreground transition-opacity"
             >
               <ChevronLeft className="w-8 h-8 md:w-10 md:h-10" strokeWidth={1.5} />
             </button>
             <button
-              aria-label="Next image"
+              aria-label={t("a11y.next")}
               onClick={showNext}
               className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 p-3 md:p-4 text-foreground/70 hover:text-foreground transition-opacity"
             >
