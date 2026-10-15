@@ -72,7 +72,7 @@ Nessun URL è hardcodato nel codice: tutto passa da env/variabili repo. Checklis
    gh workflow run deploy.yml
    ```
 3. **Worker contatti**: in `worker/wrangler.toml` → `SITE_ORIGIN = "https://simonalascialfari.com"` (+ `CONTACT_FROM`/`CONTACT_TO` prod, già annotati nel file) → `npm run worker:deploy`.
-4. **Publisher (VM)**: in `/srv/simona/secrets/env` → `PUB_SITE_URL=https://simonalascialfari.com` e `PUBLISHER_ALLOWED_ORIGINS` col nuovo dominio (CORS viewer `/p/`), riavvio servizio. La sitemap si rigenera da sola al primo publish; **robots.txt/llms.txt salvati nell'admin contengono il vecchio URL assoluto** → ri-salvarli dalla tab Homepage (i default proposti seguono il nuovo `PUB_SITE_URL`).
+4. **Publisher (VM)**: in `/srv/simona/secrets/env` → `PUB_SITE_URL=https://simonalascialfari.com` e `PUBLISHER_ALLOWED_ORIGINS` col nuovo dominio (CORS viewer `/p/`), riavvio servizio. Sitemap, robots.txt e llms.txt si allineano **da soli**: i testi editabili in admin usano il placeholder `{SITE_URL}`, sostituito col dominio corrente a ogni pubblicazione (i salvataggi vecchi con l'URL letterale vengono auto-guariti al placeholder).
 5. Redirect 301 dal vecchio `dave-palt.github.io/simonalascialfari/`: automatico (GitHub redirige le project pages col CNAME attivo); i link `/g/<slug>/` restano validi perché il path base cambia ma gli slug no.
 
 Dettagli env del publisher: `docs/RUNBOOK-SELFHOST.md` nella repo infra.
