@@ -45,7 +45,7 @@ jobs:
             # N.B. fetch di un solo branch → il ref è FETCH_HEAD, NON
             # origin/content (ref remoto mai creato): usare FETCH_HEAD.
             # Un item per volta: git checkout fallisce TUTTO se un path manca.
-            for item in g p galleries.json homepage.json 404.html .nojekyll; do
+            for item in g p galleries.json homepage.json 404.html .nojekyll robots.txt sitemap.xml llms.txt; do
               if git --work-tree=. checkout FETCH_HEAD -- "$item" 2>/dev/null; then
                 echo "incluso da content: $item"
               else
@@ -57,7 +57,7 @@ jobs:
             # e romperebbe i link /g/<slug>/ del sito e g/assets della shell
             if [ -d g ]; then cp -a g dist/; fi
             if [ -d p ]; then cp -a p dist/; fi
-            for f in galleries.json homepage.json 404.html .nojekyll; do
+            for f in galleries.json homepage.json 404.html .nojekyll robots.txt sitemap.xml llms.txt; do
               if [ -f "$f" ]; then cp "$f" dist/; fi
             done
             echo "contenuti inclusi da branch content"
