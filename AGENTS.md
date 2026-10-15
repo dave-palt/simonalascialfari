@@ -72,7 +72,8 @@ Nessun URL è hardcodato nel codice: tutto passa da env/variabili repo. Checklis
    gh workflow run deploy.yml
    ```
 3. **Worker contatti**: in `worker/wrangler.toml` → `SITE_ORIGIN = "https://simonalascialfari.com"` (+ `CONTACT_FROM`/`CONTACT_TO` prod, già annotati nel file) → `npm run worker:deploy`.
-4. **Publisher (VM)**: in `/srv/simona/secrets/env` → `PUB_SITE_URL=https://simonalascialfari.com` e `PUBLISHER_ALLOWED_ORIGINS` col nuovo dominio (CORS viewer `/p/`), riavvio servizio. Sitemap, robots.txt e llms.txt si allineano **da soli**: i testi editabili in admin usano il placeholder `{SITE_URL}`, sostituito col dominio corrente a ogni pubblicazione (i salvataggi vecchi con l'URL letterale vengono auto-guariti al placeholder).
-5. Redirect 301 dal vecchio `dave-palt.github.io/simonalascialfari/`: automatico (GitHub redirige le project pages col CNAME attivo); i link `/g/<slug>/` restano validi perché il path base cambia ma gli slug no.
+4. **Publisher (VM)**: in `/srv/simona/secrets/env` → `PUB_SITE_URL=https://simonalascialfari.com` e `PUBLISHER_ALLOWED_ORIGINS` col nuovo dominio (CORS viewer `/p/` **e admin**, D25), riavvio servizio. Sitemap, robots.txt e llms.txt si allineano **da soli**: i testi editabili in admin usano il placeholder `{SITE_URL}`, sostituito col dominio corrente a ogni pubblicazione (i salvataggi vecchi con l'URL letterale vengono auto-guariti al placeholder).
+5. **Admin statica (D25)**: rigenerare `config.js` del canale e ripubblicare (`selfhost/scripts/publish-admin-ui.sh` con `PUB_API_URL` definitivo + `SITE_URL=https://simonalascialfari.com`); **OAuth**: app GitHub → callback URL `https://simonalascialfari.com/admin/` (se OAuth App classica è l'unica callback; se GitHub App, aggiungere), Dropbox App Console → redirect `https://simonalascialfari.com/admin/` (tenere anche github.io finché il 301 GitHub è attivo).
+6. Redirect 301 dal vecchio `dave-palt.github.io/simonalascialfari/`: automatico (GitHub redirige le project pages col CNAME attivo); i link `/g/<slug>/` restano validi perché il path base cambia ma gli slug no.
 
 Dettagli env del publisher: `docs/RUNBOOK-SELFHOST.md` nella repo infra.

@@ -1,0 +1,117 @@
+
+:root{--ivory:hsl(45 30% 97%);--ink:hsl(0 0% 10%);--border:hsl(45 10% 85%);--terra:hsl(12 37% 47%);--muted:hsl(0 0% 40%);--card:hsl(42 16% 93%);--panel:#fff;--danger:hsl(0 84% 60%);--ok:hsl(150 30% 35%);--bar-veil:hsla(45,30%,97%,.9);--border-50:hsla(45,10%,85%,.5);--serif:'Cormorant Garamond',Georgia,serif;--sans:'Inter',system-ui,sans-serif}
+/* tema scuro: segue le impostazioni del dispositivo (nessun toggle manuale) —
+   STESSI token del sito (background 0 0% 10%, foreground 45 30% 97%, border 0 0% 20%) */
+@media (prefers-color-scheme: dark){
+  :root{
+    --ivory:hsl(0 0% 10%);      /* sfondo pagina */
+    --ink:hsl(45 30% 97%);     /* testo / bottoni primari */
+    --border:hsl(0 0% 20%);
+    --terra:hsl(12 45% 62%);
+    --muted:hsl(0 0% 64%);
+    --card:hsl(0 0% 14%);
+    --panel:hsl(0 0% 12%);
+    --danger:hsl(0 72% 64%);
+    --ok:hsl(150 40% 55%);
+    --bar-veil:hsla(0,0%,10%,.9);
+    --border-50:hsla(0,0%,20%,.5);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--ivory);color:var(--ink);-webkit-font-smoothing:antialiased}
+/* header — coerente con navbar del sito e barre gallerie: 3 slot (sub | brand
+   centrato | who), sticky, bordo trasparente che appare col velo allo scroll */
+header.top{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid transparent;background:var(--ivory);transition:background .4s,border-color .4s}
+header.top.veil{background:var(--bar-veil);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom-color:var(--border-50)}
+header.top .brand{flex:1 1 0;text-align:center;font-family:var(--serif);font-size:1.125rem;line-height:1.75rem;letter-spacing:.25em;text-transform:uppercase;white-space:nowrap}
+header.top .sub{flex:1 1 0;min-width:0;font-size:.75rem;line-height:1rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+header.top .who{flex:1 1 0;min-width:0;font-size:.75rem;line-height:1rem;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (min-width:768px){header.top{padding-left:3rem;padding-right:3rem}header.top .brand{font-size:1.25rem}}
+@media (max-width:600px){header.top .sub{visibility:hidden}}
+main{max-width:1320px;margin:0 auto;padding:1.75rem 1rem 4rem}
+section{background:var(--panel);border:1px solid var(--border);border-radius:0;padding:1.5rem;margin-bottom:1.25rem}
+h2{font-family:var(--serif);font-weight:500;font-size:1.45rem;letter-spacing:.03em;margin:0 0 .35rem}
+h3{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;margin:1.5rem 0 .6rem}
+h3:first-of-type{margin-top:1rem}
+label{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:.9rem 0 .3rem}
+input,select,textarea{width:100%;padding:.6rem .7rem;border-radius:0;border:1px solid var(--border);background:var(--ivory);color:var(--ink);font-size:.95rem;font-family:var(--sans)}
+input:focus{outline:none;border-color:var(--ink)}
+button{padding:.6rem 1.3rem;border-radius:0;border:1px solid var(--ink);background:var(--ink);color:var(--ivory);font-weight:500;letter-spacing:.08em;cursor:pointer;font-size:.8rem;font-family:var(--sans);transition:background .2s,border-color .2s,color .2s}
+button:hover{background:var(--terra);border-color:var(--terra);color:var(--ivory)}
+button:disabled{opacity:.45;cursor:default}
+button.ghost{background:transparent;border:1px solid var(--border);color:var(--ink)}
+button.ghost:hover{border-color:var(--ink);background:transparent}
+button.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+button.danger:hover{background:var(--danger);color:#fff}
+.row{display:flex;gap:.75rem;flex-wrap:wrap;align-items:end}
+.row>*{flex:1;min-width:140px}
+.muted{color:var(--muted);font-size:.83rem;line-height:1.55}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:0;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--border);color:var(--muted)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}
+.tag.warn{color:var(--danger);border-color:var(--danger)}
+.tag.run{color:var(--terra);border-color:var(--terra)}
+pre{background:var(--card);border:1px solid var(--border);border-radius:0;padding:.8rem;font-size:.72rem;overflow:auto;max-height:260px;white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+td,th{padding:.55rem .4rem;border-bottom:1px solid var(--border);text-align:left}
+th{color:var(--muted);font-weight:500;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+th.sortable::after{content:" ↕";opacity:.3;font-size:.8em}
+th.sortable.asc::after{content:" ↑";opacity:1}
+th.sortable.desc::after{content:" ↓";opacity:1}
+.mini-spin{display:inline-block;vertical-align:-4px;width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--terra);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:.8rem}
+#grid .cell,#slotgrid .cell{position:relative;border-radius:0;overflow:hidden;cursor:pointer;border:2px solid transparent}
+#grid .cell img,#slotgrid .cell img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--card)}
+#grid .cell.sel,#slotgrid .cell.sel{border-color:var(--terra)}
+#slotgrid .cell{cursor:grab}
+#slotgrid .cell.dragging{opacity:.4}
+#slotgrid .cell::after{content:'⠿';position:absolute;top:2px;right:4px;color:rgba(255,255,255,.85);font-size:.7rem;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+#slotgrid .cellmeta{position:absolute;top:2px;left:4px;z-index:2;background:rgba(0,0,0,.55);color:#fff;font-size:.68rem;border-radius:2px;padding:1px 5px;cursor:pointer;opacity:0;transition:opacity .15s}
+#slotgrid .cell:hover .cellmeta{opacity:1}
+#slotgrid .cell.excl{opacity:.35}
+#slotgrid .covermark{position:absolute;bottom:2px;right:4px;z-index:2;background:var(--terra);color:#fff;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;pointer-events:none}
+.err{color:var(--danger);font-size:.83rem;margin-top:.5rem}
+.okmsg{color:var(--ok);font-size:.83rem;margin-top:.5rem}
+.hidden{display:none!important}
+.pw-meter{font-size:.75rem;margin-top:.25rem}
+.link{color:var(--terra);word-break:break-all;font-size:.8rem}
+.seg{display:inline-flex;border:1px solid var(--border);margin:0 .5rem .3rem 0;vertical-align:middle}
+.seg .lb{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:.28rem .45rem;border-right:1px solid var(--border);align-self:center}
+.seg button{background:transparent;border:0;color:var(--muted);padding:.28rem .55rem;font-size:.68rem;letter-spacing:.05em;min-height:0;min-width:0;cursor:pointer;border-radius:0}
+.seg button:hover{background:transparent;color:var(--ink)}
+.seg button.on{background:var(--ink);color:var(--ivory)}
+.seg button.mod:not(.on){color:var(--terra);text-decoration:underline dotted}
+.seg button.mod.on{background:var(--terra);border-color:var(--terra)}
+.seg button:disabled{opacity:.35;cursor:not-allowed;text-decoration:line-through}
+.ibtn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .45rem;font-size:.9rem;line-height:1;min-height:0;min-width:0;cursor:pointer;border-radius:0}
+.ibtn:hover{border-color:var(--ink);color:var(--ink);background:transparent}
+.ibtn.danger{border-color:transparent;color:var(--danger)}
+.ibtn.danger:hover{border-color:var(--danger);color:var(--danger)}
+#bulkBar{display:none;align-items:center;gap:1rem;padding:.7rem 1rem;border:1px solid var(--terra);margin-bottom:.8rem}
+#bulkBar.show{display:flex}
+#bulkBar .msg{font-size:.85rem;color:var(--terra)}
+/* editor: card ben separata dalla tabella, campi allineati */
+#slotDetail{border:1px solid var(--border);border-left:3px solid var(--terra);background:var(--panel);padding:1.4rem;margin-top:1.75rem}
+#slotDetail:empty{display:none;border:0;margin:0;padding:0}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;align-items:start;margin-bottom:1rem}
+.frow>div{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.frow label{margin:0}
+.frow .hint-line{font-size:.72rem;color:var(--muted);min-height:1em}
+.sec-h{font-family:"Cormorant Garamond",serif;font-size:1.45rem;font-weight:600;margin:1.5rem 0 .5rem;border-top:1px solid var(--border);padding-top:1.1rem}
+nav#tabs{display:flex;gap:.25rem;margin-bottom:1.4rem;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+nav#tabs .tab{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:.7rem 1rem;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem}
+nav#tabs .tab:hover{background:transparent;color:var(--ink)}
+nav#tabs .tab.on{color:var(--ink);border-bottom-color:var(--terra)}
+#login{max-width:400px;margin:10vh auto 0;text-align:center}
+#login .brand-big{font-family:var(--serif);font-size:1.4rem;letter-spacing:.25em;text-transform:uppercase;margin-bottom:.4rem}
+#login .row{justify-content:center}
+#login button{width:100%;margin-top:1rem}
+
+
+/* ---- barra offline (D25) ---- */
+#offlineBar{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;padding:.65rem 1.25rem;background:hsl(12 37% 47%);color:#fff;font-size:.85rem}
+#offlineBar[hidden]{display:none}
+#offlineBar button{margin:0;padding:.35rem .9rem;font-size:.8rem;background:transparent;border:1px solid rgba(255,255,255,.75);color:#fff}
+#offlineBar button:hover{background:rgba(255,255,255,.15)}
