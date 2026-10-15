@@ -1,0 +1,137 @@
+{
+  "slug": "racconti",
+  "title": {
+    "it": "Racconti",
+    "en": "Tales"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "racconti-1",
+      "thumb": "thumbs/racconti-1.webp",
+      "full": "full/racconti-1.webp"
+    },
+    {
+      "name": "racconti-2",
+      "thumb": "thumbs/racconti-2.webp",
+      "full": "full/racconti-2.webp"
+    },
+    {
+      "name": "racconti-3",
+      "thumb": "thumbs/racconti-3.webp",
+      "full": "full/racconti-3.webp"
+    },
+    {
+      "name": "racconti-4",
+      "thumb": "thumbs/racconti-4.webp",
+      "full": "full/racconti-4.webp"
+    },
+    {
+      "name": "racconti-5",
+      "thumb": "thumbs/racconti-5.webp",
+      "full": "full/racconti-5.webp"
+    },
+    {
+      "name": "racconti-6",
+      "thumb": "thumbs/racconti-6.webp",
+      "full": "full/racconti-6.webp"
+    },
+    {
+      "name": "racconti-7",
+      "thumb": "thumbs/racconti-7.webp",
+      "full": "full/racconti-7.webp"
+    },
+    {
+      "name": "racconti-8",
+      "thumb": "thumbs/racconti-8.webp",
+      "full": "full/racconti-8.webp"
+    },
+    {
+      "name": "racconti-9",
+      "thumb": "thumbs/racconti-9.webp",
+      "full": "full/racconti-9.webp"
+    },
+    {
+      "name": "racconti-10",
+      "thumb": "thumbs/racconti-10.webp",
+      "full": "full/racconti-10.webp"
+    },
+    {
+      "name": "racconti-11",
+      "thumb": "thumbs/racconti-11.webp",
+      "full": "full/racconti-11.webp"
+    },
+    {
+      "name": "racconti-12",
+      "thumb": "thumbs/racconti-12.webp",
+      "full": "full/racconti-12.webp"
+    },
+    {
+      "name": "racconti-13",
+      "thumb": "thumbs/racconti-13.webp",
+      "full": "full/racconti-13.webp"
+    },
+    {
+      "name": "racconti-14",
+      "thumb": "thumbs/racconti-14.webp",
+      "full": "full/racconti-14.webp"
+    },
+    {
+      "name": "racconti-15",
+      "thumb": "thumbs/racconti-15.webp",
+      "full": "full/racconti-15.webp"
+    },
+    {
+      "name": "racconti-16",
+      "thumb": "thumbs/racconti-16.webp",
+      "full": "full/racconti-16.webp"
+    },
+    {
+      "name": "racconti-17",
+      "thumb": "thumbs/racconti-17.webp",
+      "full": "full/racconti-17.webp"
+    },
+    {
+      "name": "racconti-18",
+      "thumb": "thumbs/racconti-18.webp",
+      "full": "full/racconti-18.webp"
+    },
+    {
+      "name": "racconti-19",
+      "thumb": "thumbs/racconti-19.webp",
+      "full": "full/racconti-19.webp"
+    },
+    {
+      "name": "racconti-20",
+      "thumb": "thumbs/racconti-20.webp",
+      "full": "full/racconti-20.webp"
+    },
+    {
+      "name": "racconti-21",
+      "thumb": "thumbs/racconti-21.webp",
+      "full": "full/racconti-21.webp"
+    },
+    {
+      "name": "racconti-22",
+      "thumb": "thumbs/racconti-22.webp",
+      "full": "full/racconti-22.webp"
+    },
+    {
+      "name": "racconti-23",
+      "thumb": "thumbs/racconti-23.webp",
+      "full": "full/racconti-23.webp"
+    },
+    {
+      "name": "racconti-24",
+      "thumb": "thumbs/racconti-24.webp",
+      "full": "full/racconti-24.webp"
+    },
+    {
+      "name": "racconti-25",
+      "thumb": "thumbs/racconti-25.webp",
+      "full": "full/racconti-25.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041576111
+}

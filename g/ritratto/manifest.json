@@ -1,0 +1,47 @@
+{
+  "slug": "ritratto",
+  "title": {
+    "it": "Ritratto",
+    "en": "Portrait"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "ritratto-1",
+      "thumb": "thumbs/ritratto-1.webp",
+      "full": "full/ritratto-1.webp"
+    },
+    {
+      "name": "ritratto-2",
+      "thumb": "thumbs/ritratto-2.webp",
+      "full": "full/ritratto-2.webp"
+    },
+    {
+      "name": "ritratto-3",
+      "thumb": "thumbs/ritratto-3.webp",
+      "full": "full/ritratto-3.webp"
+    },
+    {
+      "name": "ritratto-4",
+      "thumb": "thumbs/ritratto-4.webp",
+      "full": "full/ritratto-4.webp"
+    },
+    {
+      "name": "ritratto-5",
+      "thumb": "thumbs/ritratto-5.webp",
+      "full": "full/ritratto-5.webp"
+    },
+    {
+      "name": "ritratto-6",
+      "thumb": "thumbs/ritratto-6.webp",
+      "full": "full/ritratto-6.webp"
+    },
+    {
+      "name": "ritratto-7",
+      "thumb": "thumbs/ritratto-7.webp",
+      "full": "full/ritratto-7.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041499267
+}

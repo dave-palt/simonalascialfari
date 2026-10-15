@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /p/
+Allow: /
+
+Sitemap: https://dave-palt.github.io/simonalascialfari/sitemap.xml

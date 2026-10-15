@@ -1,0 +1,47 @@
+{
+  "slug": "portfolio-leonardo",
+  "title": {
+    "it": "portfolio-leonardo",
+    "en": "portfolio-leonardo"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "portfolio-leonardo-1",
+      "thumb": "thumbs/portfolio-leonardo-1.webp",
+      "full": "full/portfolio-leonardo-1.webp"
+    },
+    {
+      "name": "portfolio-leonardo-2",
+      "thumb": "thumbs/portfolio-leonardo-2.webp",
+      "full": "full/portfolio-leonardo-2.webp"
+    },
+    {
+      "name": "portfolio-leonardo-3",
+      "thumb": "thumbs/portfolio-leonardo-3.webp",
+      "full": "full/portfolio-leonardo-3.webp"
+    },
+    {
+      "name": "portfolio-leonardo-4",
+      "thumb": "thumbs/portfolio-leonardo-4.webp",
+      "full": "full/portfolio-leonardo-4.webp"
+    },
+    {
+      "name": "portfolio-leonardo-5",
+      "thumb": "thumbs/portfolio-leonardo-5.webp",
+      "full": "full/portfolio-leonardo-5.webp"
+    },
+    {
+      "name": "portfolio-leonardo-6",
+      "thumb": "thumbs/portfolio-leonardo-6.webp",
+      "full": "full/portfolio-leonardo-6.webp"
+    },
+    {
+      "name": "portfolio-leonardo-7",
+      "thumb": "thumbs/portfolio-leonardo-7.webp",
+      "full": "full/portfolio-leonardo-7.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041675153
+}
