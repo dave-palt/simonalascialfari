@@ -508,7 +508,11 @@ function humanLoginError(e) {
   const m = String((e && e.message) || e);
   console.warn("[login]", m); // dettaglio tecnico solo in console
   if (/^401/.test(m) || /unauthorized/i.test(m)) return "Sessione scaduta o non valida — accedi di nuovo con GitHub.";
-  if (/^403/.test(m) || /forbidden/i.test(m)) return "Accesso negato: questo account GitHub non è tra i collaboratori autorizzati del sito. Servono i permessi di collaborazione sulla repo — chiedili a chi gestisce il sito, poi riprova con «Accedi con GitHub».";
+  if (/^403/.test(m) || /forbidden/i.test(m)) {
+    const lm = m.match(/"login":"([^"]+)"/); // il 403 porta il login negato
+    const chi = lm ? "l'account " + lm[1] : "questo account GitHub";
+    return "Accesso negato: " + chi + " non è tra i collaboratori autorizzati del sito. Se non è l'account giusto, usa «Cambia account GitHub» qui sotto; altrimenti chiedi l'accesso come collaboratore, poi riprova con «Accedi con GitHub».";
+  }
   if (/^503/.test(m) || /unreachable/i.test(m)) return "GitHub al momento non risponde — aspetta un attimo e riprova con «Accedi con GitHub».";
   if (/network|Failed to fetch/i.test(m)) return "Server non raggiungibile — controlla la connessione e riprova.";
   return "Accesso non riuscito — riprova con «Accedi con GitHub».";
@@ -525,6 +529,8 @@ async function doLogin(auto) {
     sessionStorage.setItem("simona:gh:tok", state.token);
     $("login").classList.add("hidden");
     $("app").classList.remove("hidden");
+    $("ghLogout").hidden = false;
+    $("ghSwitch").hidden = true;
     routeFromHash(); // ripristina la vista dall'hash (refresh/OAuth Dropbox inclusi)
     loadAllGalleries(); // i dati erano falliti senza token: ricarica sempre post-login
     refreshJobs(); state.timer = setInterval(refreshJobs, 2500);
@@ -532,6 +538,9 @@ async function doLogin(auto) {
   } catch (e) {
     state.token = null;
     sessionStorage.removeItem("simona:gh:tok"); // mai riprovare all'infinito con un token morto
+    $("ghLogout").hidden = true;
+    // «Cambia account» ha senso solo davanti a un 403 VISO all'utente
+    $("ghSwitch").hidden = !(auto === false && /^403/.test(String((e && e.message) || e)));
     if (!auto) { // l'auto-login fallito non spaventa: resta la pulita schermata d'accesso
       $("loginErr").textContent = humanLoginError(e);
       $("loginErr").hidden = false;
@@ -539,6 +548,43 @@ async function doLogin(auto) {
   } finally { $("loginBtn").disabled = false; }
 }
 $("loginBtn").onclick = () => doLogin(false);
+
+// esci dall'admin: butta via token e segreti di sessione, torna all'accesso.
+// L'identità SU github.com non si tocca — per entrare con un altro account
+// c'è «Cambia account GitHub» nella schermata d'accesso.
+function doLogout() {
+  if (window.__slotDirty && window.__slotDirty() && !confirm("Ci sono modifiche non salvate. Uscire comunque?")) return;
+  if (state.timer) { clearInterval(state.timer); state.timer = null; }
+  state.token = null; state.login = null; state.canEdit = null; state.jobs = [];
+  sessionStorage.removeItem("simona:gh:tok");
+  keyring.clear(); // password/DEK in memoria: non sopravvivono all'uscita
+  $("token").value = "";
+  $("app").classList.add("hidden");
+  $("login").classList.remove("hidden");
+  $("ghLogout").hidden = true;
+  $("ghSwitch").hidden = true;
+  $("loginErr").hidden = true;
+}
+$("ghLogout").onclick = doLogout;
+
+// cambio account GitHub: con una sessione github.com attiva l'authorize
+// reindirizza in silenzio SULLO STESSO account (auto-consenso) — per entrare
+// con un altro si passa da github.com/logout, che riconduce all'authorize
+// dove stavolta GitHub chiede con chi entrare.
+$("ghSwitch").onclick = async () => {
+  $("loginErr").hidden = true;
+  $("ghSwitch").disabled = true;
+  try {
+    const r = await (await fetch("/api/auth/github/url")).json();
+    if (!r.url) throw new Error(r.error || "OAuth GitHub non disponibile");
+    sessionStorage.setItem("simona:gh:state", r.state);
+    location.href = "https://github.com/logout?return_to=" + encodeURIComponent(r.url);
+  } catch (e) {
+    $("ghSwitch").disabled = false;
+    $("loginErr").textContent = "Cambio account non riuscito — " + ((e && e.message) || e);
+    $("loginErr").hidden = false;
+  }
+};
 
 // ---- login OAuth GitHub (web flow: redirect → callback → token via fragment) ----
 $("ghBtn").onclick = async () => {
