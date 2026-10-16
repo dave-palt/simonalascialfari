@@ -1,0 +1,52 @@
+{
+  "slug": "danza",
+  "title": {
+    "it": "Danza",
+    "en": "Dance"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "danza-8",
+      "thumb": "thumbs/danza-8.webp",
+      "full": "full/danza-8.webp"
+    },
+    {
+      "name": "danza-9",
+      "thumb": "thumbs/danza-9.webp",
+      "full": "full/danza-9.webp"
+    },
+    {
+      "name": "danza-14",
+      "thumb": "thumbs/danza-14.webp",
+      "full": "full/danza-14.webp"
+    },
+    {
+      "name": "danza-15",
+      "thumb": "thumbs/danza-15.webp",
+      "full": "full/danza-15.webp"
+    },
+    {
+      "name": "danza-16",
+      "thumb": "thumbs/danza-16.webp",
+      "full": "full/danza-16.webp"
+    },
+    {
+      "name": "danza-17",
+      "thumb": "thumbs/danza-17.webp",
+      "full": "full/danza-17.webp"
+    },
+    {
+      "name": "danza-28",
+      "thumb": "thumbs/danza-28.webp",
+      "full": "full/danza-28.webp"
+    },
+    {
+      "name": "danza-29",
+      "thumb": "thumbs/danza-29.webp",
+      "full": "full/danza-29.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041552840
+}

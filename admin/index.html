@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Simona — Gallerie</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="apple-touch-icon" href="./favicon.svg">
+<script src="./config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./admin.css?v=1">
+</head>
+<body>
+<header class="top">
+  <span class="sub">gestione gallerie</span>
+  <span class="brand">Simona Lascialfari</span>
+  <span class="who" id="who"></span>
+  <button id="ghLogout" class="ghost" hidden title="Esci dall'area riservata" style="flex:0;padding:.3rem .8rem;font-size:.72rem">Esci</button>
+</header>
+<main>
+
+<section id="login">
+  <div class="brand-big">Simona Lascialfari</div>
+  <p class="muted">Area riservata — gestione delle gallerie clienti.</p>
+  <div style="display:none">
+    <div class="row">
+      <div><label>Token</label><input type="password" id="token" placeholder="ghp_… / github_pat_…" autocomplete="off"></div>
+      <div style="flex:0"><button id="loginBtn">Entra</button></div>
+    </div>
+  </div>
+  <button id="ghBtn">Accedi con GitHub</button>
+  <button id="ghSwitch" class="ghost" hidden>Cambia account GitHub</button>
+  <p class="err" id="loginErr" hidden></p>
+</section>
+
+<div id="app" class="hidden">
+
+<nav id="tabs">
+  <button class="tab" data-tab="homepage">Homepage</button>
+  <button class="tab" data-tab="galleries">Gallerie</button>
+  <button class="tab" data-tab="jobs">Attività</button>
+</nav>
+
+<section id="galleries" class="tabsec">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+    <div>
+      <h2 style="margin:0">Gallerie</h2>
+      <p class="muted" style="margin:.3rem 0 0">Bozza privata → link con watermark → pubblicata (e ritorno). Le bozze scadono dopo 7 giorni.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:flex-end">
+      <button id="refreshBtn" class="ghost" title="Aggiorna la lista" aria-label="Aggiorna la lista" style="flex:0">↻ Aggiorna</button>
+      <span id="deployChip" class="tag" title="Stato del deploy su GitHub Pages" style="flex:0;display:none;white-space:nowrap"></span>
+      <span id="dbxChip" class="tag" title="Account Dropbox connesso" style="flex:0;display:none;white-space:nowrap"></span>
+      <button id="newGalBtn" style="flex:0">＋ Nuova galleria</button>
+    </div>
+  </div>
+  <div style="margin:1rem 0 .8rem" class="muted" id="tblLegend">«link dropbox» richiede foto da un'unica cartella Dropbox.</div>
+  <div id="bulkBar"><span class="msg" id="bulkMsg"></span><button id="bulkSave">Salva modifiche</button><button class="ghost" id="bulkClear">Annulla</button></div>
+  <div class="row" style="margin:1rem 0 .6rem;align-items:center;gap:.8rem;flex-wrap:wrap">
+    <input id="galFilter" placeholder="Filtra per titolo, slug o configurazione…" style="flex:1;min-width:220px;max-width:460px">
+    <span class="muted" id="galCount" style="font-size:.78rem"></span>
+  </div>
+  <table><thead><tr><th data-sort="slug" class="sortable">Galleria</th><th data-sort="conf" class="sortable">Configurazione</th><th data-sort="foto" class="sortable">Foto</th><th>Link</th><th>Azioni</th></tr></thead><tbody id="galrows"></tbody></table>
+  <div id="galForms" style="margin-top:1rem"></div>
+</section>
+
+<section id="slotSec" class="tabsec">
+  <div id="slotDetail"></div>
+</section>
+
+<section id="homepage" class="tabsec hidden">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+    <div>
+      <h2 style="margin:0">Homepage</h2>
+      <p class="muted" style="margin:.3rem 0 0">Testi, contatti diretti e gallerie mostrati nella home del sito. «Salva e pubblica» aggiorna il sito (il deploy richiede qualche minuto).</p>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center;justify-content:flex-end;flex-wrap:wrap">
+      <button id="hpReload" class="ghost" title="Ricarica" aria-label="Ricarica" style="flex:0">↻</button>
+      <button id="hpSave" style="flex:0">Salva e pubblica</button>
+    </div>
+  </div>
+  <p class="okmsg" id="hpOk" hidden></p>
+  <p class="err" id="hpErr" hidden></p>
+  <div id="hpBody"><p class="muted" style="padding:1.2rem 0"><span class="mini-spin" aria-hidden="true"></span> Carico la homepage…</p></div>
+</section>
+
+<section id="jobs" class="tabsec hidden">
+  <h2>Attività</h2>
+  <table><thead><tr><th>ID</th><th>Galleria</th><th>Stato</th><th>Avanzamento</th><th></th></tr></thead><tbody id="jobrows"></tbody></table>
+  <div id="jobdetail" style="margin-top:1rem"></div>
+</section>
+
+</div>
+</main>
+<script src="./admin.js?v=4"></script>
+<script src="./dropbox.js?v=28" defer></script>
+</body>
+</html>

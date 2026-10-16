@@ -1,0 +1,92 @@
+{
+  "slug": "maternita",
+  "title": {
+    "it": "Maternità",
+    "en": "Maternity"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "maternita-1",
+      "thumb": "thumbs/maternita-1.webp",
+      "full": "full/maternita-1.webp"
+    },
+    {
+      "name": "maternita-2",
+      "thumb": "thumbs/maternita-2.webp",
+      "full": "full/maternita-2.webp"
+    },
+    {
+      "name": "maternita-3",
+      "thumb": "thumbs/maternita-3.webp",
+      "full": "full/maternita-3.webp"
+    },
+    {
+      "name": "maternita-4",
+      "thumb": "thumbs/maternita-4.webp",
+      "full": "full/maternita-4.webp"
+    },
+    {
+      "name": "maternita-5",
+      "thumb": "thumbs/maternita-5.webp",
+      "full": "full/maternita-5.webp"
+    },
+    {
+      "name": "maternita-6",
+      "thumb": "thumbs/maternita-6.webp",
+      "full": "full/maternita-6.webp"
+    },
+    {
+      "name": "maternita-7",
+      "thumb": "thumbs/maternita-7.webp",
+      "full": "full/maternita-7.webp"
+    },
+    {
+      "name": "maternita-8",
+      "thumb": "thumbs/maternita-8.webp",
+      "full": "full/maternita-8.webp"
+    },
+    {
+      "name": "maternita-9",
+      "thumb": "thumbs/maternita-9.webp",
+      "full": "full/maternita-9.webp"
+    },
+    {
+      "name": "maternita-10",
+      "thumb": "thumbs/maternita-10.webp",
+      "full": "full/maternita-10.webp"
+    },
+    {
+      "name": "maternita-11",
+      "thumb": "thumbs/maternita-11.webp",
+      "full": "full/maternita-11.webp"
+    },
+    {
+      "name": "maternita-12",
+      "thumb": "thumbs/maternita-12.webp",
+      "full": "full/maternita-12.webp"
+    },
+    {
+      "name": "maternita-13",
+      "thumb": "thumbs/maternita-13.webp",
+      "full": "full/maternita-13.webp"
+    },
+    {
+      "name": "maternita-14",
+      "thumb": "thumbs/maternita-14.webp",
+      "full": "full/maternita-14.webp"
+    },
+    {
+      "name": "maternita-15",
+      "thumb": "thumbs/maternita-15.webp",
+      "full": "full/maternita-15.webp"
+    },
+    {
+      "name": "maternita-16",
+      "thumb": "thumbs/maternita-16.webp",
+      "full": "full/maternita-16.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041527658
+}
