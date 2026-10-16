@@ -19,9 +19,18 @@ export interface HomepageGallery {
   titolo?: { it: string; en: string };
 }
 
+/** Contatti diretti (sezione «oppure» del form): override dei valori statici;
+ *  campo assente/vuoto → il sito resta sul valore statico (come i testi). */
+export interface HomepageContatti {
+  email?: string;
+  whatsapp?: string;
+  instagram?: string;
+}
+
 export interface HomepageData {
   testi?: { it?: Record<string, string>; en?: Record<string, string> };
   gallerie?: HomepageGallery[];
+  contatti?: HomepageContatti;
 }
 
 export interface HomepageState {

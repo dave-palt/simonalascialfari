@@ -315,7 +315,20 @@ const HP_SEED_TITLES = {
   "interni-b-b-porto-ercole": { it: "Interni — B&B Porto Ercole", en: "Interiors — B&B Porto Ercole" },
 };
 
-let hpState = null; // { texts:{it,en}, gals:[{slug,visibile,titolo}], seo:{robots,llms}, siteBase, pubSlugs:[], titles:{} }
+// contatti diretti (sezione «oppure» sotto il form): default = valori statici
+// attuali del sito; il valore pubblicato non vuoto vince
+const HP_DEFAULT_CONTATTI = {
+  email: "simona.lascialfari.305@gmail.com",
+  whatsapp: "+39 331 587 4486",
+  instagram: "https://www.instagram.com/seemorea_photography/",
+};
+const HP_CONTACT_FIELDS = [
+  { k: "email", label: "E-mail", ph: "nome@esempio.it" },
+  { k: "whatsapp", label: "WhatsApp", ph: "+39 331 587 4486" },
+  { k: "instagram", label: "Instagram", ph: "@nome oppure indirizzo completo" },
+];
+
+let hpState = null; // { texts:{it,en}, contatti:{email,whatsapp,instagram}, gals:[{slug,visibile,titolo}], seo:{robots,llms}, siteBase, pubSlugs:[], titles:{} }
 let hpBaseline = null;
 let hpLoaded = false;
 
@@ -327,8 +340,13 @@ function hpSnap() {
     texts.it[f.k] = a ? a.value : "";
     texts.en[f.k] = b ? b.value : "";
   }
+  const contatti = {};
+  for (const f of HP_CONTACT_FIELDS) {
+    const el = $("hp-c-" + f.k);
+    contatti[f.k] = el ? el.value.trim() : "";
+  }
   const seo = { robots: $("hp-robots")?.value ?? "", llms: $("hp-llms")?.value ?? "" };
-  return JSON.stringify({ texts, gals: hpState.gals, seo });
+  return JSON.stringify({ texts, contatti, gals: hpState.gals, seo });
 }
 window.__hpDirty = () => hpLoaded && hpBaseline !== null && hpSnap() !== null && hpSnap() !== hpBaseline;
 
@@ -355,6 +373,13 @@ async function loadHomepage(force) {
       it: Object.assign({}, HP_DEFAULT_TEXTS.it, (cfg && cfg.testi && cfg.testi.it) || {}),
       en: Object.assign({}, HP_DEFAULT_TEXTS.en, (cfg && cfg.testi && cfg.testi.en) || {}),
     };
+    // contatti diretti: pubblicato non vuoto vince, altrimenti default statico
+    const contatti = Object.assign({}, HP_DEFAULT_CONTATTI);
+    const pubC = (cfg && cfg.contatti) || {};
+    for (const f of HP_CONTACT_FIELDS) {
+      const v = typeof pubC[f.k] === "string" ? pubC[f.k].trim() : "";
+      if (v) contatti[f.k] = v;
+    }
     let siteBase = rg.siteUrl || window.__SITE_URL || "";
     while (siteBase.endsWith("/")) siteBase = siteBase.slice(0, -1);
     // SEO: default precompilati SENZA URL assoluto — {SITE_URL} è sostituito
@@ -380,7 +405,7 @@ async function loadHomepage(force) {
       const order = HP_SEED_ORDER.concat(pubSlugs.filter((s) => HP_SEED_ORDER.indexOf(s) < 0));
       gals = order.filter((s) => pubSlugs.includes(s)).map((s) => ({ slug: s, visibile: true, titolo: titleOf(s, null) }));
     }
-    hpState = { texts, gals, seo, siteBase, pubSlugs, titles };
+    hpState = { texts, contatti, gals, seo, siteBase, pubSlugs, titles };
     hpLoaded = true;
     renderHomepage();
     hpBaseline = hpSnap();
@@ -392,6 +417,16 @@ async function loadHomepage(force) {
 function hpEsc(s) { return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 function renderHomepage() {
+  // conserva le modifiche non salvate ai testi/contatti/seo: i click sui bottoni
+  // gallerie ri-renderizzano tutto il pannello e senza questo li cancellerebbero
+  // (solo se i campi esistono già nel DOM — al primo render c'è lo spinner)
+  const snap = $("hp-it-" + HP_TEXT_FIELDS[0].k) ? hpSnap() : null;
+  if (hpState && snap) {
+    const s = JSON.parse(snap);
+    hpState.texts = s.texts;
+    hpState.contatti = s.contatti;
+    hpState.seo = s.seo;
+  }
   const st = hpState;
   const pubSet = new Set(st.pubSlugs);
   let html = "";
@@ -404,6 +439,14 @@ function renderHomepage() {
         (f.ta ? '<textarea id="' + id + '" rows="6">' + v + "</textarea>" : '<input id="' + id + '" value="' + v + '">') +
         "</div>";
     }
+  }
+  html += '<h3 class="sec-h">Contatti diretti</h3>' +
+    '<p class="muted" style="margin:.2rem 0 .8rem">E-mail, WhatsApp e Instagram mostrati nella sezione contatti del sito, sotto il form. Campo vuoto = resta il valore predefinito.</p>';
+  for (const f of HP_CONTACT_FIELDS) {
+    const id = "hp-c-" + f.k;
+    const v = hpEsc(st.contatti[f.k] || "");
+    html += '<div style="margin-bottom:.9rem"><label for="' + id + '">' + f.label + "</label>" +
+      '<input id="' + id + '" value="' + v + '" placeholder="' + hpEsc(f.ph) + '"></div>';
   }
   html += '<h3 class="sec-h">Gallerie nella home</h3>' +
     '<p class="muted" style="margin:.2rem 0 .8rem">Sposta con le frecce ↑ ↓ e decidi quali mostrare, e in quale ordine, nella galleria progetti del sito.</p>' +
@@ -488,7 +531,13 @@ async function saveHomepage() {
       .filter((g) => pubSet.has(g.slug))
       .map((g, i) => ({ slug: g.slug, visibile: !!g.visibile, ordine: i, titolo: g.titolo || undefined }));
     const dropped = snap.gals.length - gallerie.length;
-    await api("/api/homepage", { method: "PUT", body: JSON.stringify({ testi: snap.texts, gallerie, seo: { robots: snap.seo.robots, llmsTxt: snap.seo.llms } }) });
+    // contatti: solo i campi non vuoti (vuoto = il sito resta sul valore statico)
+    const contatti = {};
+    for (const f of HP_CONTACT_FIELDS) {
+      const v = (snap.contatti[f.k] || "").trim();
+      if (v) contatti[f.k] = v;
+    }
+    await api("/api/homepage", { method: "PUT", body: JSON.stringify({ testi: snap.texts, contatti: Object.keys(contatti).length ? contatti : undefined, gallerie, seo: { robots: snap.seo.robots, llmsTxt: snap.seo.llms } }) });
     hpState.gals = gallerie;
     hpBaseline = hpSnap();
     ok.hidden = false;

@@ -1,5 +1,6 @@
 import { useTranslation } from "@/lib/i18n";
 import { CONTACT_ENDPOINT } from "@/lib/contact-endpoint";
+import { useHomepageData } from "@/hooks/use-homepage";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,8 +27,35 @@ const makeSchema = (t: (key: string) => string) =>
 
 type FormValues = z.infer<ReturnType<typeof makeSchema>>;
 
+// Contatti diretti: default statici (usati nel prerender SSR e quando la
+// homepage gestita non li override). La config admin (homepage.json) vince
+// campo per campo, se non vuota — stessa semantica dei testi.
+const CONTATTI_DEFAULT = {
+  email: "simona.lascialfari.305@gmail.com",
+  whatsapp: "+39 331 587 4486",
+  instagram: "https://www.instagram.com/seemorea_photography/",
+} as const;
+
+const pickContatto = (v: string | undefined, fallback: string): string => {
+  const t = (v ?? "").trim();
+  return t.length > 0 ? t : fallback;
+};
+
+/** Accetta "@nome", "nome" o un URL completo → sempre un URL profilo. */
+const instagramUrl = (v: string): string =>
+  /^https?:\/\//i.test(v)
+    ? v
+    : `https://www.instagram.com/${v.replace(/^@+/, "").replace(/\/+$/, "")}/`;
+
 export function Contact() {
   const { t, language } = useTranslation();
+  const { data: homepage } = useHomepageData();
+
+  const contatti = homepage?.contatti;
+  const email = pickContatto(contatti?.email, CONTATTI_DEFAULT.email);
+  const whatsapp = pickContatto(contatti?.whatsapp, CONTATTI_DEFAULT.whatsapp);
+  const whatsappHref = `https://wa.me/${whatsapp.replace(/[^0-9]/g, "")}`;
+  const instagram = instagramUrl(pickContatto(contatti?.instagram, CONTATTI_DEFAULT.instagram));
 
   // t cambia identità a ogni render: la dipendenza vera è la lingua
   const schema = useMemo(() => makeSchema(t), [language]);
@@ -218,10 +246,10 @@ export function Contact() {
 
           <div className="space-y-4 font-serif text-lg md:text-xl text-foreground/80">
             <p className="font-semibold text-foreground">Simona Lascialfari</p>
-            <p><a href="mailto:simona.lascialfari.305@gmail.com" className="hover:text-accent transition-colors">simona.lascialfari.305@gmail.com</a></p>
+            <p><a href={`mailto:${email}`} className="hover:text-accent transition-colors">{email}</a></p>
             <p className="flex items-center justify-center gap-2">
               <a
-                href="https://wa.me/393315874486"
+                href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -230,11 +258,11 @@ export function Contact() {
                 <svg viewBox="0 0 32 32" className="w-5 h-5" fill="currentColor" aria-hidden="true">
                   <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.792 1.23 1.82 2.81 3.41 4.74 4.54.616.355 2.137 1.075 2.808 1.075h.013c.671 0 2.062-.673 2.43-1.433.15-.302.225-.674.225-1.017 0-.156-.058-.314-.103-.43-.157-.297-1.62-.987-1.823-1.075zM16.32 26.69c-1.93 0-3.81-.534-5.45-1.554l-3.81 1.218 1.246-3.682a10.27 10.27 0 0 1-1.78-5.788c0-5.69 4.62-10.31 10.31-10.31a10.24 10.24 0 0 1 7.293 3.018 10.24 10.24 0 0 1 3.017 7.293c0 5.69-4.62 10.31-10.31 10.31zm0-22.598c-6.81 0-12.34 5.532-12.34 12.34a12.36 12.36 0 0 0 1.696 6.243L4 32l5.5-1.756a12.31 12.31 0 0 0 6.815 2.06c6.81 0 12.34-5.531 12.34-12.341S23.13 4.092 16.32 4.092z"/>
                 </svg>
-                WhatsApp +39 331 587 4486
+                WhatsApp {whatsapp}
               </a>
             </p>
             <p className="pt-4">
-              <a href="https://www.instagram.com/seemorea_photography/" target="_blank" rel="noopener noreferrer" className="text-sm font-sans tracking-widest uppercase hover:text-accent transition-colors border-b border-transparent hover:border-accent">
+              <a href={instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-sans tracking-widest uppercase hover:text-accent transition-colors border-b border-transparent hover:border-accent">
                 Instagram
               </a>
             </p>
