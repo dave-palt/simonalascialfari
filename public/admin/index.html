@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
+<!-- CSP (issue #1): script SOLO da self (niente inline), connessioni solo a
+     self + Dropbox API + GitHub API + l'origine dell'API del canale
+     (placeholder nell'attributo content: lo sostituisce il publisher quando
+     serve l'admin in same-origin, e publish-admin-ui.sh con l'API reale sul
+     canale gh-pages). Mitigazione difensiva: i token OAuth vivono in
+     localStorage, la CSP riduce l'exploitabilità di eventuali gap futuri. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.dropboxapi.com https://content.dropboxapi.com https://api.github.com https://simona-vm.dav3.cc; object-src 'none'; base-uri 'self'">
 <title>Simona — Gallerie</title>
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="apple-touch-icon" href="./favicon.svg">
