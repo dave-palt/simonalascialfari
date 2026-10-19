@@ -136,6 +136,7 @@ function routeFromHash() {
   const m = h.match(/^#\/galleria\/([a-z0-9-]+)/);
   if (m) { showTab("galleries"); openSlot(m[1]); return; }
   if (h === "#/nuova") { showTab("galleries"); openSlot(null); return; }
+  if (h === "#/dropbox") { showTab("dropbox"); return; }
   if (h === "#/homepage") { showTab("homepage"); return; }
   if (h === "#/attivita") { showTab("jobs"); return; }
   // lista pulita
@@ -155,9 +156,12 @@ const showTab = (name) => {
   $$(".tabsec").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   // l'editor (slotSec) NON è un tab: visibile solo nella tab Gallerie (e se non vuoto)
   $("slotSec").classList.toggle("hidden", name !== "galleries");
-  setRoute(name === "jobs" ? "#/attivita" : (name === "homepage" ? "#/homepage" : "#/gallerie"));
+  setRoute(name === "jobs" ? "#/attivita" : (name === "homepage" ? "#/homepage" : (name === "dropbox" ? "#/dropbox" : "#/gallerie")));
   if (name === "galleries") loadAllGalleries();
   if (name === "homepage") loadHomepage(false);
+  // tab Dropbox: il pannello è servito da dropbox.js (defer — al primo boot
+  // può non esserci ancora; al click/route successivo si monta da solo)
+  if (name === "dropbox" && window.__admin?.mountTab) window.__admin.mountTab();
 };
 $$(".tab").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
 // nuova galleria: se il form NUOVO è già aperto non lo ricrea (niente sfarfallio),
@@ -410,7 +414,7 @@ async function loadHomepage(force) {
     renderHomepage();
     hpBaseline = hpSnap();
   } catch (e) {
-    $("hpBody").innerHTML = '<p class="err">' + e.message + "</p>";
+    $("hpBody").innerHTML = '<p class="err">' + hpEsc(e.message) + "</p>";
   }
 }
 
@@ -570,12 +574,26 @@ function humanLoginError(e) {
 async function doLogin(auto) {
   $("loginErr").hidden = true;
   $("loginBtn").disabled = true;
+  // login manuale: il bottone stesso dice cosa sta succedendo
+  if (!auto) $("loginBtn").textContent = "Controllo…";
+  // auto-login (refresh con token in sessionStorage): NESSUN controllo d'accesso
+  // visibile — nemmeno «Accedi con GitHub» — finché non si sa se il token è
+  // ancora buono; tutto torna solo se il check fallisce
+  if (auto) {
+    $("loginBtn").hidden = true;
+    const g = $("ghBtn"); if (g) g.hidden = true;
+    const w = $("loginWait"); if (w) w.hidden = false;
+  }
   try {
     state.token = $("token").value.trim();
     const me = await (await api("/api/auth/check")).json();
     state.login = me.login; state.canEdit = me.canEdit;
     $("who").textContent = me.login + (me.canEdit ? " · edit" : " · read-only");
     sessionStorage.setItem("simona:gh:tok", state.token);
+    // fallback persistente: alcuni profili buttano il sessionStorage tra un
+    // caricamento e l'altro (stessa storia del token Dropbox) → senza questo
+    // il login "non durava" e tornava il bottone a ogni riapertura
+    try { localStorage.setItem("simona:gh:tokl", state.token); } catch (e) { /* ok */ }
     $("login").classList.add("hidden");
     $("app").classList.remove("hidden");
     $("ghLogout").hidden = false;
@@ -587,14 +605,20 @@ async function doLogin(auto) {
   } catch (e) {
     state.token = null;
     sessionStorage.removeItem("simona:gh:tok"); // mai riprovare all'infinito con un token morto
+    if (auto) { try { localStorage.removeItem("simona:gh:tokl"); } catch (e) { /* ok */ } } // nemmeno col fallback
     $("ghLogout").hidden = true;
+    if (auto) {
+      $("loginBtn").hidden = false;
+      const g = $("ghBtn"); if (g) g.hidden = false;
+      const w = $("loginWait"); if (w) w.hidden = true;
+    }
     // «Cambia account» ha senso solo davanti a un 403 VISO all'utente
     $("ghSwitch").hidden = !(auto === false && /^403/.test(String((e && e.message) || e)));
     if (!auto) { // l'auto-login fallito non spaventa: resta la pulita schermata d'accesso
       $("loginErr").textContent = humanLoginError(e);
       $("loginErr").hidden = false;
     }
-  } finally { $("loginBtn").disabled = false; }
+  } finally { $("loginBtn").disabled = false; $("loginBtn").textContent = "Entra"; }
 }
 $("loginBtn").onclick = () => doLogin(false);
 
@@ -606,10 +630,14 @@ function doLogout() {
   if (state.timer) { clearInterval(state.timer); state.timer = null; }
   state.token = null; state.login = null; state.canEdit = null; state.jobs = [];
   sessionStorage.removeItem("simona:gh:tok");
+  try { localStorage.removeItem("simona:gh:tokl"); } catch (e) { /* ok */ }
   keyring.clear(); // password/DEK in memoria: non sopravvivono all'uscita
   $("token").value = "";
   $("app").classList.add("hidden");
   $("login").classList.remove("hidden");
+  $("loginBtn").hidden = false;
+  const g2 = $("ghBtn"); if (g2) g2.hidden = false;
+  const lw = $("loginWait"); if (lw) lw.hidden = true;
   $("ghLogout").hidden = true;
   $("ghSwitch").hidden = true;
   $("loginErr").hidden = true;
@@ -620,14 +648,34 @@ $("ghLogout").onclick = doLogout;
 // reindirizza in silenzio SULLO STESSO account (auto-consenso) — per entrare
 // con un altro si passa da github.com/logout, che riconduce all'authorize
 // dove stavolta GitHub chiede con chi entrare.
+
+// PKCE GitHub (RFC 7636, 2026-10-17): il redirect ?code= è una navigation
+// pubblica — chi gestisce il dominio (Worker) o legge i log del CDN vede il
+// code. Senza PKCE la VM scambiava QUALSIASI code presentato (confused
+// deputy col client_secret) e restituiva il token admin al chiamante. Con
+// PKCE il verifier esiste solo qui: il code rubato non è scambiabile.
+function ghB64url(u8){ let s = ""; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function ghVerifier(){ const u = new Uint8Array(32); crypto.getRandomValues(u); return ghB64url(u); }
+async function ghS256(v){ const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v)); return ghB64url(new Uint8Array(d)); }
+
+async function ghAuthorizeUrl(){
+  const v = ghVerifier();
+  const r = await (await fetch("/api/auth/github/url?code_challenge=" + encodeURIComponent(await ghS256(v)))).json();
+  if (!r.url) throw new Error(r.error || "OAuth GitHub non disponibile");
+  sessionStorage.setItem("simona:gh:state", r.state);
+  sessionStorage.setItem("simona:gh:v", v);
+  // fallback PKCE in localStorage: profili browser che svuotano il
+  // sessionStorage durante il giro OAuth (stessa ragione di dropbox.js) —
+  // chiave effimera, rimossa al consumo, scadenza 15 minuti
+  try { localStorage.setItem("simona:gh:pkce", JSON.stringify({ v: v, st: r.state, at: Date.now() })); } catch (e){ /* ok */ }
+  return r.url;
+}
+
 $("ghSwitch").onclick = async () => {
   $("loginErr").hidden = true;
   $("ghSwitch").disabled = true;
   try {
-    const r = await (await fetch("/api/auth/github/url")).json();
-    if (!r.url) throw new Error(r.error || "OAuth GitHub non disponibile");
-    sessionStorage.setItem("simona:gh:state", r.state);
-    location.href = "https://github.com/logout?return_to=" + encodeURIComponent(r.url);
+    location.href = "https://github.com/logout?return_to=" + encodeURIComponent(await ghAuthorizeUrl());
   } catch (e) {
     $("ghSwitch").disabled = false;
     $("loginErr").textContent = "Cambio account non riuscito — " + ((e && e.message) || e);
@@ -635,14 +683,11 @@ $("ghSwitch").onclick = async () => {
   }
 };
 
-// ---- login OAuth GitHub (web flow: redirect → callback → token via fragment) ----
+// ---- login OAuth GitHub (web flow: redirect → callback → exchange PKCE) ----
 $("ghBtn").onclick = async () => {
   $("loginErr").hidden = true;
   try {
-    const r = await (await fetch("/api/auth/github/url")).json();
-    if (!r.url) throw new Error(r.error || "OAuth GitHub non disponibile");
-    sessionStorage.setItem("simona:gh:state", r.state);
-    location.href = r.url;
+    location.href = await ghAuthorizeUrl();
   } catch (e) {
     $("loginErr").textContent = "GitHub OAuth: " + e.message;
     $("loginErr").hidden = false;
@@ -654,26 +699,64 @@ $("ghBtn").onclick = async () => {
 (async () => {
   const q = new URLSearchParams(location.search);
   const code = q.get("code");
+  const stO = q.get("state");
+  // ?code= può essere il rientro del consenso DROPBOX (PKCE: stesso URL di
+  // ritorno da D25). Se lo state combacia con quello Dropbox pendente NON è
+  // nostro: lo processa dropbox.js (defer) — qui non si scambia e NON si
+  // pulisce l'URL, altrimenti il codice muore prima che dropbox.js lo veda
+  const dbxSt = sessionStorage.getItem("simona:dbx:st");
+  const isDbxReturn = !!(code && stO && dbxSt && stO === dbxSt);
+  // rientro GitHub: SOLO se lo state combacia con quello generato uscendo
+  // (anti-CSRF). Un code con state estraneo non si scambia MAI: sarebbe un
+  // redirect iniettato, non il nostro flusso.
+  let ghSt = sessionStorage.getItem("simona:gh:state");
+  let ghV = sessionStorage.getItem("simona:gh:v") || "";
+  if (!ghV || !ghSt){
+    try {
+      const pk = JSON.parse(localStorage.getItem("simona:gh:pkce") || "null");
+      if (pk && Date.now() - (pk.at || 0) < 15 * 60 * 1000){
+        if (!ghV) ghV = pk.v;
+        if (!ghSt) ghSt = pk.st;
+      }
+    } catch (e){ /* ok */ }
+  }
+  const isGhReturn = !!(code && stO && ghSt && stO === ghSt);
   const frag = new URLSearchParams(location.hash.replace(/^#/, ""));
   const tokFrag = frag.get("access_token");
   const gherr = q.get("error_description") || q.get("error") || frag.get("gherr");
   const clean = () => history.replaceState({}, "", location.pathname);
-  if (code) {
+  const ghConsume = () => {
+    sessionStorage.removeItem("simona:gh:state");
+    sessionStorage.removeItem("simona:gh:v");
+    try { localStorage.removeItem("simona:gh:pkce"); } catch (e){ /* ok */ }
+  };
+  if (code && !isDbxReturn) {
     clean();
-    try {
-      const r = await fetch("/api/auth/github/exchange", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, redirectUri: location.origin + location.pathname }),
-      });
-      const j = await r.json();
-      if (!j.token) throw new Error(j.error || "scambio del codice non riuscito");
-      $("token").value = j.token;
-      doLogin(false);
-    } catch (e) {
-      console.warn("[gh-oauth]", e);
-      $("loginErr").textContent = "Accesso GitHub non riuscito — riprova con «Accedi con GitHub».";
+    if (!isGhReturn) {
+      console.warn("[gh-oauth] state non riconosciuto — scambio rifiutato");
+      $("loginErr").textContent = "Rientro GitHub non riconosciuto — ripremi «Accedi con GitHub».";
       $("loginErr").hidden = false;
+    } else if (!ghV) {
+      ghConsume();
+      $("loginErr").textContent = "Sessione OAuth scaduta (verifier perso) — ripremi «Accedi con GitHub».";
+      $("loginErr").hidden = false;
+    } else {
+      ghConsume();
+      try {
+        const r = await fetch("/api/auth/github/exchange", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, redirectUri: location.origin + location.pathname, codeVerifier: ghV }),
+        });
+        const j = await r.json();
+        if (!j.token) throw new Error(j.error || "scambio del codice non riuscito");
+        $("token").value = j.token;
+        doLogin(false);
+      } catch (e) {
+        console.warn("[gh-oauth]", e);
+        $("loginErr").textContent = "Accesso GitHub non riuscito — " + ((e && e.message) || e);
+        $("loginErr").hidden = false;
+      }
     }
   } else if (tokFrag) {
     clean();
@@ -688,12 +771,19 @@ $("ghBtn").onclick = async () => {
 })();
 
 // auto-login: il token sopravvive ai round-trip OAuth (es. consenso Dropbox)
-// in sessionStorage — stessa semantica del token Dropbox, per-tab
+// in sessionStorage — stessa semantica del token Dropbox, per-tab. Fallback
+// localStorage per i profili che svuotano il sessionStorage a ogni load.
 (() => {
-  const t = sessionStorage.getItem("simona:gh:tok");
+  let t = sessionStorage.getItem("simona:gh:tok");
+  if (!t) { try { t = localStorage.getItem("simona:gh:tokl") || null; } catch (e) { /* ok */ } }
   if (t && !state.token) {
     $("token").value = t;
+    sessionStorage.setItem("simona:gh:tok", t);
     doLogin(true); // silenzioso: token scaduto → schermata d'accesso, nessun errore
+  } else {
+    // nessun token da provare: il bottone si mostra QUI, non nell'HTML — così
+    // tra paint ed esecuzione dello script non c'è MAI un frame col bottone
+    $("ghBtn").hidden = false;
   }
 })();
 
@@ -803,12 +893,15 @@ async function pollJob(id, delay) {
 
 function renderJobDetail(j) {
   const res = j.result || {};
-  const rows = (j.log || []).map((l) => "<div>" + l.replace(/</g, "&lt;") + "</div>").join("");
+  // hpEsc ovunque: j.error può contenere NOMI FILE Dropbox (import falliti) e
+  // l'admin tiene i token OAuth in localStorage — un nome ostile non deve
+  // mai finire raw in innerHTML
+  const rows = (j.log || []).map((l) => "<div>" + hpEsc(l) + "</div>").join("");
   $("jobdetail").innerHTML =
-    '<h2 style="margin-bottom:.5rem">Job ' + j.id + "</h2>" +
-    '<p><span class="tag ' + tagClass(j.state) + '">' + j.state + "</span> " +
+    '<h2 style="margin-bottom:.5rem">Job ' + hpEsc(j.id) + "</h2>" +
+    '<p><span class="tag ' + tagClass(j.state) + '">' + hpEsc(j.state) + "</span> " +
     (res.ok != null ? '<span class="muted">' + res.ok + "/" + res.total + " foto · " + res.cacheHits + " cache hit</span>" : "") + "</p>" +
-    (j.error ? '<p class="err">' + j.error + "</p>" : "") +
+    (j.error ? '<p class="err">' + hpEsc(j.error) + "</p>" : "") +
     "<pre>" + rows + "</pre>";
 }
 
@@ -842,6 +935,13 @@ async function wizardPassword(job) {
 
 async function finishManifest(job, pw) {
   const res = job.result;
+  if (!res || !res.dek) {
+    // D15: il DEK vive in RAM sul server — dopo un riavvio (o a fine handoff)
+    // non c'è più: senza rigenerare i contenitori la fase 2 è impossibile
+    renderJobDetail(job);
+    $("jobdetail").insertAdjacentHTML("beforeend", '<p class="err">chiave della galleria non più disponibile (server riavviato o handoff scaduto) — riesegui l&#39;importazione dalla tab Gallerie: le foto sono in cache, sarà rapido.</p>');
+    return;
+  }
   const dek = Buffer_like_fromHex(res.dek);
   const skeleton = res.skeleton;
   const iterations = pw ? 600000 : 1000; // senza password: KDF simbolico (il segreto è il token URL)
@@ -862,12 +962,12 @@ async function finishManifest(job, pw) {
     headers: { Authorization: "Bearer " + state.token, "Content-Type": "application/octet-stream" },
     body: blob,
   });
-  if (!r.ok) { renderJobDetail(job); $("jobdetail").insertAdjacentHTML("beforeend", '<p class="err">fase 2 fallita: ' + await r.text() + "</p>"); return; }
+  if (!r.ok) { renderJobDetail(job); $("jobdetail").insertAdjacentHTML("beforeend", '<p class="err">fase 2 fallita: ' + hpEsc(await r.text()) + "</p>"); return; }
   sessionStorage.removeItem("simona:pw:" + job.id);
   // keyring di sessione: DEK + password restano in memoria — i salvataggi
   // successivi della stessa galleria non chiedono più la password
   if (res.slug) keyring.set(res.slug, { dek, pw });
-  $("jobdetail").insertAdjacentHTML("beforeend", '<p class="okmsg">Pubblicata ✓ — /g/' + res.slug + "/</p>");
+  $("jobdetail").insertAdjacentHTML("beforeend", '<p class="okmsg">Pubblicata ✓ — /g/' + hpEsc(res.slug) + "/</p>");
   loadGalleries();
 }
 
@@ -1126,7 +1226,7 @@ function renderGalRows() {
     // galleria di un ALTRO account Dropbox connesso → blocco duro
     const accLock = r.acct && r.acct.id && meDbx && r.acct.id !== meDbx ? r.acct : null;
     const accTitle = accLock
-      ? "galleria dell'account Dropbox " + (accLock.email || accLock.id) + " — connettiti con quell'account per modificarla"
+      ? "galleria dell'account Dropbox " + hpEsc(accLock.email || accLock.id) + " — connettiti con quell'account per modificarla"
       : "";
     const lockAll = accLock
       ? ["bozza", "pubblicata", "proof", "web", "no", "sì"]
@@ -1159,8 +1259,8 @@ function renderGalRows() {
       if (!r.plain) acts.push('<button class="ibtn" data-pw="' + r.slug + '" title="Cambia password" aria-label="Cambia password">🔑</button>');
       acts.push('<button class="ibtn danger' + (accLock ? '" disabled title="' + accTitle : "") + '" data-del="' + r.slug + '" title="Rimuovi dal sito" aria-label="Rimuovi dal sito">✕</button>');
     } else acts.push('<button class="ibtn danger' + (accLock ? '" disabled title="' + accTitle : "") + '" data-drop="' + r.slug + '" title="Elimina bozza" aria-label="Elimina bozza">🗑</button>');
-    const accBadge = accLock ? ' <span class="tag warn" title="' + accTitle + '">🔒 ' + (accLock.email || "altro account") + "</span>" : "";
-    return "<tr><td>" + r.slug + accBadge + '<div class="muted" style="font-size:.75rem">' + (r.title?.it || "") + (r.created ? " · " + new Date(r.created).toLocaleDateString("it-IT") : "") + "</div></td>" +
+    const accBadge = accLock ? ' <span class="tag warn" title="' + accTitle + '">🔒 ' + hpEsc(accLock.email || "altro account") + "</span>" : "";
+    return "<tr><td>" + hpEsc(r.slug) + accBadge + '<div class="muted" style="font-size:.75rem">' + hpEsc(r.title?.it || "") + (r.created ? " · " + new Date(r.created).toLocaleDateString("it-IT") : "") + "</div></td>" +
       "<td>" + conf + "</td>" +
       "<td>" + (r.tot != null ? (r.sel ?? "?") + "/" + r.tot : "—") + "</td>" +
       "<td>" + link + copyBtn + "</td>" +
@@ -1268,7 +1368,7 @@ async function loadAllGalleries() {
     renderGalRows();
     refreshBulkBar();
   } catch (e) {
-    $("galrows").innerHTML = '<tr><td colspan="5" class="err">' + e.message + "</td></tr>";
+    $("galrows").innerHTML = '<tr><td colspan="5" class="err">' + hpEsc(e.message) + "</td></tr>";
   }
 }
 
@@ -1339,11 +1439,11 @@ async function openSlot(slug, opts = {}) {
       // blocco per-account: galleria di un altro Dropbox connesso → non modificabile
       const meDbx = dbxAccountId();
       if (m.account?.id && meDbx && m.account.id !== meDbx) {
-        const who = m.account.email || m.account.id;
+        const who = hpEsc(m.account.email || m.account.id);
         editingSlug = null;
         setRoute("#/galleria/" + slug); // dopo il cambio account il redirect OAuth riapre QUI
         $("slotDetail").innerHTML =
-          '<h2 style="margin:0 0 .6rem">Galleria «' + slug + '» 🔒</h2>' +
+          '<h2 style="margin:0 0 .6rem">Galleria «' + hpEsc(slug) + '» 🔒</h2>' +
           '<p class="muted" style="margin:.2rem 0">Questa galleria contiene foto dell\'account Dropbox <strong>' + who + "</strong> e non è modificabile dall'account attualmente connesso.</p>" +
           '<p class="muted" style="margin:.2rem 0 .8rem">Qui sotto trovi l\'account connesso: usa <strong>«Esci / cambia account»</strong> e collega <strong>' + who + "</strong> — la galleria si riapre da sola dopo il collegamento.</p>" +
           '<button class="ghost" id="slotCloseLock" style="margin-bottom:1rem">✕ Chiudi</button>' +
@@ -1547,8 +1647,8 @@ async function openSlot(slug, opts = {}) {
           pop.style.cssText = "position:fixed;inset:0;background:rgba(10,10,10,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem";
           pop.innerHTML = '<div style="background:var(--panel);border:1px solid var(--border);padding:1.2rem;max-width:420px;width:100%">' +
             '<h3 style="margin:0 0 .8rem;font-size:1rem">Nome e descrizione</h3>' +
-            '<p class="muted" style="margin:0 0 .8rem;font-size:.78rem">File: ' + name + '</p>' +
-            '<label style="font-size:.78rem">Nome visibile</label><input id="impCap" style="width:100%" value="' + (cell.dataset.caption || "").replace(/"/g, "&quot;") + '" placeholder="come lo vedrà il cliente">' +
+            '<p class="muted" style="margin:0 0 .8rem;font-size:.78rem">File: ' + hpEsc(name) + '</p>' +
+            '<label style="font-size:.78rem">Nome visibile</label><input id="impCap" style="width:100%" value="' + hpEsc(cell.dataset.caption || "") + '" placeholder="come lo vedrà il cliente">' +
             '<label style="font-size:.78rem;margin-top:.6rem;display:block">Descrizione</label><textarea id="impDesc" rows="3" style="width:100%" placeholder="testo mostrato sotto la foto nel viewer"></textarea>' +
             '<button id="impCover" class="ghost" style="margin-top:.9rem;width:100%">' + (cell.dataset.cover === "1" ? "★ Questa è già l'anteprima della galleria — togli" : "☆ Imposta come anteprima della galleria") + "</button>" +
             '<p class="muted" style="font-size:.72rem;margin:.4rem 0 0">L\'anteprima è la foto che rappresenta la galleria nella home del sito.</p>' +
@@ -1729,7 +1829,7 @@ async function openSlot(slug, opts = {}) {
     if (window.__admin?.mountPicker) window.__admin.mountPicker(isNew ? null : slug);
     else $("dbxBodyIn").innerHTML = '<p class="err">pannello Dropbox non caricato — ricarica la pagina</p>';
   } catch (e) {
-    $("slotDetail").innerHTML = '<p class="err">' + e.message + "</p>";
+    $("slotDetail").innerHTML = '<p class="err">' + hpEsc(e.message) + "</p>";
   }
 }
 
@@ -1831,7 +1931,7 @@ const loadGalleries = loadAllGalleries;
 
 async function rewrapForm(slug) {
   $("galForms").innerHTML =
-    '<h2>Cambia password — ' + slug + "</h2>" +
+    '<h2>Cambia password — ' + hpEsc(slug) + "</h2>" +
     '<p class="muted">Serve la password ATTUALE (de-wrappa il DEK nel browser) e la nuova (vuota = rimuove la protezione, resta il link segreto). Il server vede solo blob opachi.</p>' +
     '<div class="row"><div><label>Password attuale</label><input type="password" id="oldpw"></div>' +
     '<div><label>Nuova password (vuota = rimuovi)</label><input type="password" id="newpw"></div>' +
