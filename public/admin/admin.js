@@ -200,6 +200,12 @@ const IV_LEN = 12;
 const te = new TextEncoder(), td = new TextDecoder();
 const b64e = (u8) => btoa(String.fromCharCode(...u8));
 const b64d = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+// b64 per buffer GRANDI (foto): lo spread di b64e salta lo stack oltre ~100KB
+const b64big = (u8) => {
+  let s = "";
+  for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+  return btoa(s);
+};
 async function importAes(k) { return crypto.subtle.importKey("raw", k, "AES-GCM", false, ["encrypt", "decrypt"]); }
 async function aesEnc(key, pt) {
   const k = await importAes(key);
@@ -249,7 +255,7 @@ async function fetchEncHeader(slug, stage, l2) {
 async function fetchContainer(slug, stage, l2, file) {
   const url = stage === "proof"
     ? "/api/p/" + slug + "/" + file + "?t=" + encodeURIComponent(l2 || "")
-    : "/raw/content/g/" + slug + "/container/" + file;
+    : "/api/galleries/" + slug + "/container/" + file;
   const r = await fetch(url, { headers: { Authorization: "Bearer " + state.token } });
   if (!r.ok) throw new Error("contenitore " + file + " non raggiungibile (" + r.status + ")");
   return new Uint8Array(await r.arrayBuffer());
@@ -1252,7 +1258,9 @@ function renderGalRows() {
     const acts = [];
     if (accLock) {
       acts.push('<button class="ibtn" disabled title="' + accTitle + '" aria-label="Galleria di un altro account Dropbox">🔒</button>');
-    } else if (r.editable) acts.push('<button class="ibtn" data-open="' + r.slug + '" title="Modifica" aria-label="Modifica">✎</button>');
+    } else if (r.editable) acts.push(r.rebuildPw
+      ? '<button class="ibtn" data-rebuild="' + r.slug + '" title="Modifica — serve la password" aria-label="Modifica">✎</button>'
+      : '<button class="ibtn" data-open="' + r.slug + '" title="Modifica" aria-label="Modifica">✎</button>');
     if (r.stage === "published") {
       // 🔑 cambia password: solo per le gallerie cifrate (le plain non hanno
       // manifest.enc — aggiungere una password = pubblicazione dall'editor)
@@ -1271,6 +1279,7 @@ function renderGalRows() {
     : (list.length ? html : '<tr><td colspan="5" class="muted">nessuna galleria corrisponde al filtro</td></tr>');
   if ($("galCount")) $("galCount").textContent = q ? list.length + " di " + galRows.length + " gallerie" : "";
   $$("#galrows [data-open]").forEach((b) => (b.onclick = () => openSlot(b.dataset.open)));
+  $$("#galrows [data-rebuild]").forEach((b) => (b.onclick = () => rebuildForm(b.dataset.rebuild)));
   $$("#galrows [data-plink]").forEach((b) => (b.onclick = () => makeProofLink(b.dataset.plink)));
   $$("#galrows [data-glink]").forEach((b) => (b.onclick = async () => {
     const url = galMeta.siteBase + "/g/" + b.dataset.glink + "/";
@@ -1334,6 +1343,8 @@ async function loadAllGalleries() {
       if (Array.isArray(s.folders) && s.folders.length === 1 && !!s.folders[0].dropboxPath) singleFolder.add(s.slug);
     });
     const drafts = new Map((rs.slots || []).map((s) => [s.slug, s]));
+    // D28: pubblicate CIFRATE senza slot — modificabili ricostruendo con la password
+    const rbSet = new Set(rs.rebuildable || []);
     // account Dropbox per galleria: slot (bozze) ∨ registro gallery-map (pubblicate)
     const accBySlug = {};
     (rmap.entries || []).forEach((e) => {
@@ -1355,7 +1366,9 @@ async function loadAllGalleries() {
     for (const s of pubSlugs) {
       const d = drafts.get(s);
       rows.push({ slug: s, title: d?.title, created: d?.createdAt ?? 0, stage: "published",
-        sel: d?.selectedCount, tot: d?.itemCount, l2: d?.l2Token, editable: !!d, plain: !!d?.plain, acct: accBySlug[s] || null, ...confOf("published", s, d?.lastImages, !!d?.hasOriginals) });
+        sel: d?.selectedCount, tot: d?.itemCount, l2: d?.l2Token,
+        editable: !!d || rbSet.has(s), rebuildPw: !d && rbSet.has(s),
+        plain: !!d?.plain, acct: accBySlug[s] || null, ...confOf("published", s, d?.lastImages, !!d?.hasOriginals) });
     }
     for (const s of (rs.slots || [])) {
       if (pubSlugs.includes(s.slug)) continue;
@@ -1434,7 +1447,15 @@ async function openSlot(slug, opts = {}) {
     let m = { items: [], title: { it: "", en: "" } };
     let st = { stage: "new" };
     if (!isNew) {
-      m = await (await api("/staging/" + slug + "/manifest.json")).json();
+      // slot mancante: la rotta rigenera le PLAIN da sola (D28); una CIFRATA
+      // senza slot risponde 409 needs-password → form della password
+      const mr = await fetch("/staging/" + slug + "/manifest.json", { headers: { Authorization: "Bearer " + state.token } });
+      if (mr.status === 409) {
+        const ej = await mr.json().catch(() => ({}));
+        if (ej.error === "needs-password") return rebuildForm(slug);
+      }
+      if (!mr.ok) throw new Error("Galleria non raggiungibile (" + mr.status + ")");
+      m = await mr.json();
       st = await (await api("/api/staging/" + slug + "/state")).json();
       // blocco per-account: galleria di un altro Dropbox connesso → non modificabile
       const meDbx = dbxAccountId();
@@ -1970,6 +1991,90 @@ async function rewrapForm(slug) {
     }
     else alert("ri-wrap fallito: " + await put.text());
   };
+}
+
+// ---- D28: rigenerazione dati di lavoro di una pubblicata con password ----
+// Lo slot staging manca (pulizia/macchina cambiata): il server non può leggere
+// una galleria cifrata (D15) ma il browser sì, con la password. Qui si de-wrappa
+// il DEK, si decifrano elenco+thumb+foto e si rispediscono: il server semina la
+// cache e ricrea lo slot. Il sito non viene toccato.
+function rebuildForm(slug) {
+  editingSlug = null; // nessun editor aperto: questo form È la vista
+  pending.delete(slug);
+  setRoute("#/galleria/" + slug); // il redirect Dropbox/GitHub riapre qui
+  $("slotDetail").innerHTML =
+    '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem">' +
+    '<h2 style="margin:0">Galleria «' + hpEsc(slug) + '»</h2>' +
+    '<button class="ghost" id="rbClose" style="flex:0">✕ Chiudi</button></div>' +
+    '<p class="muted" style="margin:.4rem 0 .8rem">Questa galleria è pubblicata con password e il server non ha più i suoi dati di lavoro. Con la password si ricostruiscono adesso: il sito resta esattamente com\'è, la galleria torna modificabile.</p>' +
+    '<div class="row"><div><label>Password della galleria</label><input type="password" id="rbPw" autocomplete="off" style="width:100%"></div>' +
+    '<div style="flex:0;align-self:end"><button id="rbGo">Rigenera</button></div></div>' +
+    '<p class="muted" id="rbStatus" style="margin:.6rem 0 0"></p>';
+  $("rbClose").onclick = () => { $("slotDetail").innerHTML = ""; window.__slotDirty = null; setRoute("#/gallerie"); loadAllGalleries(); };
+  $("rbGo").onclick = () => runRebuild(slug, $("rbPw").value);
+  $("rbPw").onkeydown = (e) => { if (e.key === "Enter") runRebuild(slug, $("rbPw").value); };
+  $("rbPw").focus();
+}
+
+async function runRebuild(slug, pw) {
+  const st2 = $("rbStatus");
+  const go = $("rbGo");
+  if (!pw) { st2.textContent = "Inserisci la password della galleria."; return; }
+  go.disabled = true;
+  st2.textContent = "Sblocco la galleria…";
+  try {
+    // 1. de-wrap del DEK con la password (finisce anche nel keyring di sessione)
+    const { hdr, dek } = await unlockSlotKey(slug, pw, "published");
+    st2.textContent = "Leggo l'elenco delle foto…";
+    const payload = JSON.parse(td.decode(await aesDecRaw(dek, b64d(hdr.payload))));
+    const ordered = [];
+    for (const p of payload.pages || []) for (const n of p.items || []) ordered.push(n);
+    if (!ordered.length) throw new Error("nell'elenco della galleria non c'è nessuna foto");
+    // 2. thumb: scarica le pagine, decifrale, separa i frame [lunghezza][bytes]
+    const thumbs = new Map();
+    for (const p of payload.pages || []) {
+      const dec = await aesDecRaw(dek, await fetchContainer(slug, "published", null, p.file));
+      let off = 0;
+      for (const n of p.items || []) {
+        const len = new DataView(dec.buffer, dec.byteOffset + off, 4).getUint32(0);
+        off += 4;
+        thumbs.set(n, dec.slice(off, off + len));
+        off += len;
+      }
+    }
+    // 3. foto originali (i full cifrati per-immagine) + 4. invio al server
+    const items = [];
+    let k = 0;
+    for (const n of ordered) {
+      k++;
+      st2.textContent = "Recupero le foto… " + k + " di " + ordered.length;
+      const meta = (payload.items || {})[n] || {};
+      const original = await aesDecRaw(dek, await fetchContainer(slug, "published", null, meta.full));
+      items.push({
+        name: n,
+        ...(meta.caption ? { caption: meta.caption } : {}),
+        ...(meta.desc ? { desc: meta.desc } : {}),
+        thumb: b64big(thumbs.get(n)),
+        original: b64big(original),
+      });
+    }
+    st2.textContent = "Salvo i dati di lavoro…";
+    await api("/api/staging/" + slug + "/rebuild", { method: "POST", body: JSON.stringify({
+      title: payload.title || { it: slug, en: slug },
+      items,
+      hasPw: true,
+      ...(payload.dropboxOriginalsUrl ? { hasOriginals: true } : {}),
+    }) });
+    st2.textContent = "Fatto ✓ — apro la galleria…";
+    await openSlot(slug, { silent: true });
+    loadAllGalleries();
+  } catch (e) {
+    console.warn("rebuild", slug, e);
+    st2.textContent = e.message === "Password errata"
+      ? "Password errata — riprova."
+      : "Rigenerazione non riuscita: " + (e.message || "errore inatteso") + ".";
+    go.disabled = false;
+  }
 }
 
 async function aesDec(key, data) {
