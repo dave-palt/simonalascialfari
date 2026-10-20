@@ -1235,7 +1235,12 @@ function dbxDownload(path, onPct, _retried){
       if (ev.lengthComputable && onPct) onPct(Math.round((ev.loaded / ev.total) * 100));
     };
     xhr.onload = function(){
-      if (xhr.status >= 200 && xhr.status < 300) return res(xhr.response);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        // D29: i metadati (id, rev) viaggiano nell'header dropbox-api-result —
+        // attaccati al blob risolvono per il flusso «collega originale»
+        try { xhr.response.__meta = JSON.parse(xhr.getResponseHeader("dropbox-api-result") || "null") || null; } catch (e) { xhr.response.__meta = null; }
+        return res(xhr.response);
+      }
       if ((xhr.status === 401 || xhr.status === 400) && !_retried){
         refreshToken().then(function(ok){
           if (ok) dbxDownload(path, onPct, true).then(res, rej);
@@ -2011,6 +2016,35 @@ A.mountTab = async function(){
 
 A.ensureOriginalsLink = ensureOriginalsLink;
 A.dbxAccount = function(){ return acct; };
+
+// --- D29: flusso «collega gli originali» (ricerca + download + seed attesi) ---
+// parentOf senza regex: immune ai collassi di escape delle patch
+function parentOf(p){ var i = p.lastIndexOf("/"); return i <= 0 ? "/" : p.slice(0, i); }
+A.searchFiles = async function(q){
+  if (!tok) throw new Error("Connetti Dropbox per cercare le foto");
+  var r = await dbx(API, "/2/files/search_v2", { query: q, options: { max_results: 30, filename_only: true } });
+  return (r.matches || []).map(function(m){ return (m.metadata && m.metadata.metadata) || null; })
+    .filter(Boolean)
+    .filter(function(e){ return e[".tag"] !== "folder" && e.path_lower; })
+    .map(function(e){
+      return { name: e.name, path: e.path_lower, display: e.path_display || e.path_lower, id: e.id || "", folder: parentOf(e.path_lower) };
+    });
+};
+A.dbxDownloadOriginal = async function(path, onPct){
+  if (!tok) throw new Error("Connetti Dropbox per scaricare l'originale");
+  return await dbxDownload(path, onPct);
+};
+// seed ATTESO (a differenza di seedBlob fire-and-forget): il collegamento
+// dell'item si registra SOLO se l'originale è davvero arrivato al server
+A.seedOriginal = async function(name, id, rev, blob){
+  var r = await fetch("/api/cache/seed?name=" + encodeURIComponent(name) +
+    "&dropboxId=" + encodeURIComponent(id) + "&rev=" + encodeURIComponent(rev), {
+    method: "POST",
+    headers: { Authorization: "Bearer " + A.state.token, "Content-Type": "application/octet-stream" },
+    body: blob,
+  });
+  if (!r.ok) throw new Error((await r.text().catch(function(){ return ""; })) || ("invio dell'originale non riuscito (" + r.status + ")"));
+};
 
 // navigazione a #/dropbox DOPO il load: routeFromHash di admin.js può girare
 // prima che dropbox.js esista (mount saltato) — qui il mount è garantito

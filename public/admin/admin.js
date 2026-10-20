@@ -1520,10 +1520,19 @@ async function openSlot(slug, opts = {}) {
     // --- 2. foto della galleria (se esistono) e SUBITO sotto il picker Dropbox:
     //     scelte e disponibili vicini, stessa gerarchia visiva ---
     if (!isNew && m.items.length) {
+      // D29: originali mancanti → flusso guidato di collegamento (mockup 003)
+      linkM = m; linkSlug = slug;
+      const unbound = m.items.filter((it) => !it.dropboxId);
+      if (unbound.length) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:.3rem 0 .6rem">' +
+          '<span class="muted">' + unbound.length + ' foto senza originale Dropbox <span style="display:block;font-size:.72rem">colleghi gli originali per ripubblicare a piena qualità</span></span>' +
+          '<button class="ghost" id="linkBtn" style="flex:0">Collega gli originali (' + unbound.length + ')</button></div>' +
+          '<div id="linkFlow" hidden style="border-left:3px solid var(--terra);padding:.5rem 0 .5rem 1.1rem;margin:.3rem 0 .9rem"></div>';
+      }
       html += '<div id="slotgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:.4rem 0 .4rem">';
       for (const it of m.items) {
         const isCov = m.cover === it.name;
-        html += '<div class="cell' + (it.selected ? " sel" : " excl") + '" draggable="true" data-name="' + it.name + '" data-cover="' + (isCov ? 1 : 0) + '" data-caption="' + (it.caption || "") + '" title="' + (it.caption || it.name) + (it.desc ? " — " + it.desc : "") + '"><img alt="' + (it.caption || it.name) + '" data-thumb="' + it.thumb + '"><span class="cellmeta" title="nome e descrizione">✎</span>' + (isCov ? '<span class="covermark">★ anteprima</span>' : "") + "</div>";
+        html += '<div class="cell' + (it.selected ? " sel" : " excl") + '" draggable="true" data-name="' + it.name + '" data-cover="' + (isCov ? 1 : 0) + '" data-caption="' + (it.caption || "") + '" title="' + (it.caption || it.name) + (it.desc ? " — " + it.desc : "") + '"><img alt="' + (it.caption || it.name) + '" data-thumb="' + it.thumb + '"><span class="cellmeta" title="nome e descrizione">✎</span>' + (isCov ? '<span class="covermark">★ anteprima</span>' : "") + '<span class="srcdot' + (it.dropboxId ? " ok" : "") + '" title="' + (it.dropboxId ? "Originale Dropbox collegato" : "Originale Dropbox non collegato — «Collega gli originali»") + '">' + (it.dropboxId ? "originale ✓" : "senza originale") + "</span></div>";
       }
       html += '</div><p class="muted" style="margin:.2rem 0 .6rem">click su una foto = includila/escludi · trascina per cambiarne l\'ordine · ✎ = nome/descrizione · ★ = foto di copertina</p>';
     }
@@ -1657,6 +1666,9 @@ async function openSlot(slug, opts = {}) {
         const r = await api("/staging/" + slug + "/" + img.dataset.thumb);
         img.src = URL.createObjectURL(await r.blob());
       });
+      // D29: flusso guidato «collega gli originali»
+      const lbtn = $("linkBtn");
+      if (lbtn) lbtn.onclick = () => startLinkFlow();
       const wireSel = () => {
         // ✎ = nome visibile / descrizione (salvataggio immediato, come la selezione)
         const openMeta = (cell) => {
@@ -2089,4 +2101,178 @@ async function removeGallery(slug) {
 }
 
 // loadJobsOnce è invocato dopo il login (il token serve per le API)
+// ---- D29: flusso guidato «collega gli originali» (mockup 003, user-picked) ----
+// Le foto senza dropboxId ripubblicano dal derivato byname: qui si cerca il
+// file su Dropbox, il browser scarica l'originale (files/download), lo SEMINA
+// al server (seed atteso) e registra la provenienza (PATCH itemSource). Il
+// collegamento è immediato (niente Salva); il sito cambia alla prossima
+// pubblicazione. La stessa coda ripara le foto la cui anteprima non si trova
+// più (sonda byname 404 → copy di riparazione).
+let linkM = null;
+let linkSlug = null;
+let linkQ = [];
+let linkI = 0;
+
+function startLinkFlow() {
+  const f = $("linkFlow");
+  if (!f || !linkM) return;
+  const D = window.__admin;
+  if (!D?.searchFiles || !D?.dbxDownloadOriginal) {
+    f.hidden = false;
+    f.innerHTML = '<p class="muted">Il pannello Dropbox non è ancora caricato — aspetta un istante e riprova.</p>';
+    return;
+  }
+  if (!D.dbxAccount || !D.dbxAccount()) {
+    f.hidden = false;
+    f.innerHTML = '<p class="muted">Per cercare le foto serve Dropbox connesso: usa «Connetti Dropbox» nella sezione qui sotto, poi premi di nuovo «Collega gli originali».</p>';
+    return;
+  }
+  linkQ = linkM.items.filter((it) => !it.dropboxId).map((it) => it.name);
+  if (!linkQ.length) { f.hidden = true; return; }
+  linkI = 0;
+  f.hidden = false;
+  renderLinkCur();
+  f.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderLinkCur() {
+  const f = $("linkFlow");
+  if (!f) return;
+  const name = linkQ[linkI];
+  const it = linkM?.items.find((x) => x.name === name);
+  f.innerHTML =
+    '<div style="display:flex;gap:1.3rem;flex-wrap:wrap;align-items:flex-start">' +
+    '<div style="flex:0 0 280px;max-width:100%"><img id="lfImg" alt="" style="width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid var(--border);background:var(--card)"></div>' +
+    '<div style="flex:1;min-width:250px">' +
+    '<div style="font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--terra)">Foto ' + (linkI + 1) + " di " + linkQ.length + " — " + hpEsc(name) + "</div>" +
+    '<p class="muted" id="lfWhy" style="margin:.45rem 0 .2rem">Controllo la foto…</p>' +
+    '<label style="margin:.6rem 0 .25rem">Cerca su Dropbox per nome file</label>' +
+    '<input id="lfQ" autocomplete="off">' +
+    '<div id="lfRes" style="margin-top:.5rem;max-height:250px;overflow:auto"></div>' +
+    '<div style="display:flex;gap:.6rem;margin-top:.9rem">' +
+    '<button class="ghost" id="lfSkip">Salta questa foto</button>' +
+    '<button class="ghost" id="lfStop">Ferma e torna alla galleria</button></div>' +
+    "</div></div>";
+  // thumb auth-gated (come la griglia)
+  if (it?.thumb && linkSlug) {
+    void (async () => {
+      try {
+        const r = await api("/staging/" + linkSlug + "/" + it.thumb);
+        const im = $("lfImg");
+        if (im) im.src = URL.createObjectURL(await r.blob());
+      } catch { /* la griglia resta */ }
+    })();
+  }
+  // sonda byname (raw fetch: il 404 è un ESITO, non un errore — mai via api())
+  if (linkSlug) {
+    void (async () => {
+      try {
+        const r = await fetch("/api/cache", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + state.token, "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const w = $("lfWhy");
+        if (!w) return;
+        w.innerHTML = r.ok
+          ? "Cerca il file su Dropbox: l'originale sostituirà la versione ridotta del sito alla prossima pubblicazione."
+          : '<span style="color:var(--danger)">Questa foto non trova più la sua immagine originale.</span> Cerca il file su Dropbox per ripristinarla: il collegamento si sostituisce.';
+      } catch { /* resta il copy generico */ }
+    })();
+  }
+  const q = $("lfQ");
+  if (q) {
+    q.value = name;
+    let t = null;
+    q.oninput = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => linkSearch(q.value), 350);
+    };
+  }
+  const sk = $("lfSkip");
+  if (sk) sk.onclick = () => linkNext();
+  const st = $("lfStop");
+  if (st) st.onclick = () => { f.hidden = true; };
+  linkSearch(name);
+}
+
+async function linkSearch(qs) {
+  const box = $("lfRes");
+  if (!box || !qs || qs.trim().length < 2) return;
+  box.innerHTML = '<p class="muted" style="margin:.2rem 0">cerco…</p>';
+  try {
+    const res = await window.__admin.searchFiles(qs.trim());
+    if (!box.isConnected) return;
+    if (!res.length) {
+      box.innerHTML = '<p class="muted">nessun risultato — prova un altro nome, oppure salta la foto</p>';
+      return;
+    }
+    box.innerHTML = "";
+    res.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "lfres";
+      row.title = r.display || r.path;
+      const b = document.createElement("b");
+      b.textContent = r.name;
+      const p = document.createElement("span");
+      p.className = "muted";
+      p.style.cssText = "display:block;font-size:.72rem";
+      p.textContent = r.folder || "/";
+      row.appendChild(b);
+      row.appendChild(p);
+      row.onclick = () => bindLinkCurrent(r);
+      box.appendChild(row);
+    });
+  } catch (e) {
+    box.innerHTML = '<p class="err">' + hpEsc(e.message) + "</p>";
+  }
+}
+
+async function bindLinkCurrent(r) {
+  const name = linkQ[linkI];
+  const why = $("lfWhy");
+  const box = $("lfRes");
+  if (!name || !linkSlug) return;
+  try {
+    if (box) box.innerHTML = "";
+    if (why) why.textContent = "Scarico l'originale da Dropbox…";
+    const blob = await window.__admin.dbxDownloadOriginal(r.path, (pct) => {
+      if (why) why.textContent = "Scarico l'originale da Dropbox… " + pct + "%";
+    });
+    const meta = blob.__meta;
+    if (!meta?.id || !meta?.rev) throw new Error("Dropbox non ha tornato i dati del file — riprova la ricerca");
+    if (why) why.textContent = "Invio l'originale al server… (obbligatorio)";
+    await window.__admin.seedOriginal(name, meta.id, meta.rev, blob);
+    if (why) why.textContent = "Collego la foto…";
+    await api("/api/staging/" + linkSlug + "/itemSource", {
+      method: "PATCH",
+      body: JSON.stringify({ name, dropboxId: meta.id, rev: meta.rev, folder: r.folder || "" }),
+    });
+    // stato locale + pallino in griglia (niente re-render: il flusso continua)
+    const it = linkM?.items.find((x) => x.name === name);
+    if (it) { it.dropboxId = meta.id; }
+    $$("#slotgrid .cell").forEach((c) => {
+      if (c.dataset.name !== name) return;
+      const d = c.querySelector(".srcdot");
+      if (d) { d.className = "srcdot ok"; d.textContent = "originale ✓"; }
+    });
+    linkNext();
+  } catch (e) {
+    console.warn("bindLink", name, e);
+    if (why) why.textContent = "Collegamento non riuscito: " + (e.message || "errore inatteso") + " — riprova o salta la foto.";
+  }
+}
+
+function linkNext() {
+  linkI++;
+  const f = $("linkFlow");
+  if (linkI >= linkQ.length) {
+    if (f) f.hidden = true;
+    // refresh silenzioso: contatore/bottone si allineano (e la tabella pure)
+    void openSlot(linkSlug || "", { silent: true }).then(() => loadAllGalleries());
+    return;
+  }
+  renderLinkCur();
+}
+
 window.__admin = { state, api, pollJob, loadGalleries, loadJobsOnce, showErr, $, showTab, openSlot };

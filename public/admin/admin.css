@@ -115,3 +115,11 @@ nav#tabs .tab.on{color:var(--ink);border-bottom-color:var(--terra)}
 #offlineBar[hidden]{display:none}
 #offlineBar button{margin:0;padding:.35rem .9rem;font-size:.8rem;background:transparent;border:1px solid rgba(255,255,255,.75);color:#fff}
 #offlineBar button:hover{background:rgba(255,255,255,.15)}
+
+/* D29: pallino stato originale nella griglia editor + righe risultato del
+   flusso «collega gli originali» (stessi token, radius 0) */
+.srcdot{position:absolute;bottom:2px;left:4px;z-index:2;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;background:rgba(0,0,0,.5);color:var(--ivory);pointer-events:none}
+.srcdot.ok{background:rgba(20,90,60,.78);color:#c9ecd9}
+.lfres{padding:.5rem .4rem;border-bottom:1px solid var(--border);cursor:pointer}
+.lfres:hover{background:var(--card)}
+.lfres b{font-size:.85rem;font-weight:500}
