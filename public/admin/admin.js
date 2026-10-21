@@ -1529,6 +1529,9 @@ async function openSlot(slug, opts = {}) {
           '<button class="ghost" id="linkBtn" style="flex:0">Collega gli originali (' + unbound.length + ')</button></div>' +
           '<div id="linkFlow" hidden style="border-left:3px solid var(--terra);padding:.5rem 0 .5rem 1.1rem;margin:.3rem 0 .9rem"></div>';
       }
+      if (m.sourcesDirty) {
+        html += '<p class="muted" style="margin:.2rem 0 .6rem;color:var(--terra)">Hai collegato nuovi originali: premi «Salva» per riallineare le foto del sito (elaborazione completa).</p>';
+      }
       html += '<div id="slotgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:.4rem 0 .4rem">';
       for (const it of m.items) {
         const isCov = m.cover === it.name;
