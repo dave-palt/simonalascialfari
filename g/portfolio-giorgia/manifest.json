@@ -1,0 +1,82 @@
+{
+  "slug": "portfolio-giorgia",
+  "title": {
+    "it": "portfolio-giorgia",
+    "en": "portfolio-giorgia"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "portfolio-giorgia-1",
+      "thumb": "thumbs/portfolio-giorgia-1.webp",
+      "full": "full/portfolio-giorgia-1.webp"
+    },
+    {
+      "name": "portfolio-giorgia-2",
+      "thumb": "thumbs/portfolio-giorgia-2.webp",
+      "full": "full/portfolio-giorgia-2.webp"
+    },
+    {
+      "name": "portfolio-giorgia-3",
+      "thumb": "thumbs/portfolio-giorgia-3.webp",
+      "full": "full/portfolio-giorgia-3.webp"
+    },
+    {
+      "name": "portfolio-giorgia-4",
+      "thumb": "thumbs/portfolio-giorgia-4.webp",
+      "full": "full/portfolio-giorgia-4.webp"
+    },
+    {
+      "name": "portfolio-giorgia-5",
+      "thumb": "thumbs/portfolio-giorgia-5.webp",
+      "full": "full/portfolio-giorgia-5.webp"
+    },
+    {
+      "name": "portfolio-giorgia-6",
+      "thumb": "thumbs/portfolio-giorgia-6.webp",
+      "full": "full/portfolio-giorgia-6.webp"
+    },
+    {
+      "name": "portfolio-giorgia-7",
+      "thumb": "thumbs/portfolio-giorgia-7.webp",
+      "full": "full/portfolio-giorgia-7.webp"
+    },
+    {
+      "name": "portfolio-giorgia-8",
+      "thumb": "thumbs/portfolio-giorgia-8.webp",
+      "full": "full/portfolio-giorgia-8.webp"
+    },
+    {
+      "name": "portfolio-giorgia-9",
+      "thumb": "thumbs/portfolio-giorgia-9.webp",
+      "full": "full/portfolio-giorgia-9.webp"
+    },
+    {
+      "name": "portfolio-giorgia-10",
+      "thumb": "thumbs/portfolio-giorgia-10.webp",
+      "full": "full/portfolio-giorgia-10.webp"
+    },
+    {
+      "name": "portfolio-giorgia-11",
+      "thumb": "thumbs/portfolio-giorgia-11.webp",
+      "full": "full/portfolio-giorgia-11.webp"
+    },
+    {
+      "name": "portfolio-giorgia-12",
+      "thumb": "thumbs/portfolio-giorgia-12.webp",
+      "full": "full/portfolio-giorgia-12.webp"
+    },
+    {
+      "name": "portfolio-giorgia-13",
+      "thumb": "thumbs/portfolio-giorgia-13.webp",
+      "full": "full/portfolio-giorgia-13.webp"
+    },
+    {
+      "name": "portfolio-giorgia-14",
+      "thumb": "thumbs/portfolio-giorgia-14.webp",
+      "full": "full/portfolio-giorgia-14.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041602928
+}

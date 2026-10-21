@@ -1,0 +1,67 @@
+{
+  "slug": "portfolio-gabriele",
+  "title": {
+    "it": "portfolio-gabriele",
+    "en": "portfolio-gabriele"
+  },
+  "pageSize": 24,
+  "items": [
+    {
+      "name": "portfolio-gabriele-1",
+      "thumb": "thumbs/portfolio-gabriele-1.webp",
+      "full": "full/portfolio-gabriele-1.webp"
+    },
+    {
+      "name": "portfolio-gabriele-2",
+      "thumb": "thumbs/portfolio-gabriele-2.webp",
+      "full": "full/portfolio-gabriele-2.webp"
+    },
+    {
+      "name": "portfolio-gabriele-3",
+      "thumb": "thumbs/portfolio-gabriele-3.webp",
+      "full": "full/portfolio-gabriele-3.webp"
+    },
+    {
+      "name": "portfolio-gabriele-4",
+      "thumb": "thumbs/portfolio-gabriele-4.webp",
+      "full": "full/portfolio-gabriele-4.webp"
+    },
+    {
+      "name": "portfolio-gabriele-5",
+      "thumb": "thumbs/portfolio-gabriele-5.webp",
+      "full": "full/portfolio-gabriele-5.webp"
+    },
+    {
+      "name": "portfolio-gabriele-6",
+      "thumb": "thumbs/portfolio-gabriele-6.webp",
+      "full": "full/portfolio-gabriele-6.webp"
+    },
+    {
+      "name": "portfolio-gabriele-7",
+      "thumb": "thumbs/portfolio-gabriele-7.webp",
+      "full": "full/portfolio-gabriele-7.webp"
+    },
+    {
+      "name": "portfolio-gabriele-8",
+      "thumb": "thumbs/portfolio-gabriele-8.webp",
+      "full": "full/portfolio-gabriele-8.webp"
+    },
+    {
+      "name": "portfolio-gabriele-9",
+      "thumb": "thumbs/portfolio-gabriele-9.webp",
+      "full": "full/portfolio-gabriele-9.webp"
+    },
+    {
+      "name": "portfolio-gabriele-10",
+      "thumb": "thumbs/portfolio-gabriele-10.webp",
+      "full": "full/portfolio-gabriele-10.webp"
+    },
+    {
+      "name": "portfolio-gabriele-11",
+      "thumb": "thumbs/portfolio-gabriele-11.webp",
+      "full": "full/portfolio-gabriele-11.webp"
+    }
+  ],
+  "dropboxOriginalsUrl": null,
+  "createdAt": 1792041624014
+}

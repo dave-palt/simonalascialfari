@@ -1,0 +1,116 @@
+{
+  "testi": {
+    "it": {
+      "hero.tagline": "Fotografa — Bagno a Ripoli",
+      "portfolio.title": "GALLERIA PROGETTI",
+      "about.title": "CHI SONO",
+      "about.text": "Mi chiamo Simona, sono una fotografa con base a Bagno a Ripoli. Mi occupo principalmente di ritratto, fotografia di danza e maternità, ambiti in cui il corpo, il gesto e l'emozione diventano il centro dell'immagine. Curo inoltre la fotografia di interni, influenzata dalla mia formazione come interior designer, che mi permette di leggere lo spazio e valorizzarlo con un occhio orientato alla progettazione. Il mio lavoro nasce dal desiderio di raccontare persone, movimento e spazi attraverso immagini capaci di restituire non solo ciò che si vede, ma anche ciò che si vive.",
+      "contact.title": "CONTATTI",
+      "contact.intro": "Per collaborazioni, richieste di informazioni o per prenotare una sessione, compilate il form sottostante o contattatemi direttamente."
+    },
+    "en": {
+      "hero.tagline": "Photographer — Bagno a Ripoli",
+      "portfolio.title": "PORTFOLIO",
+      "about.title": "ABOUT",
+      "about.text": "I am Simona, a photographer based in Bagno a Ripoli. I specialise primarily in portraits, dance photography and maternity photography, fields in which body, movement and emotion take centre stage. Alongside this, I also specialise in interior photography, influenced by my education as an interior designer, which enables me to interpret a space and showcase it through a design-oriented lens. My work stems from a desire to tell stories about people, movement and spaces through images capable of conveying not only what is seen, but also what is experienced.",
+      "contact.title": "CONTACT",
+      "contact.intro": "For collaborations, inquiries or to book a session, please fill out the form below or contact me directly."
+    }
+  },
+  "gallerie": [
+    {
+      "slug": "ritratto",
+      "visibile": true,
+      "ordine": 0,
+      "titolo": {
+        "it": "Ritratto",
+        "en": "Portrait"
+      }
+    },
+    {
+      "slug": "maternita",
+      "visibile": true,
+      "ordine": 1,
+      "titolo": {
+        "it": "Maternità",
+        "en": "Maternity"
+      }
+    },
+    {
+      "slug": "danza",
+      "visibile": true,
+      "ordine": 2,
+      "titolo": {
+        "it": "Danza",
+        "en": "Dance"
+      }
+    },
+    {
+      "slug": "racconti",
+      "visibile": true,
+      "ordine": 3,
+      "titolo": {
+        "it": "Racconti",
+        "en": "Tales"
+      }
+    },
+    {
+      "slug": "portfolio-giorgia",
+      "visibile": true,
+      "ordine": 4,
+      "titolo": {
+        "it": "Portfolio - Giorgia",
+        "en": "Portfolio - Giorgia"
+      }
+    },
+    {
+      "slug": "portfolio-gabriele",
+      "visibile": true,
+      "ordine": 5,
+      "titolo": {
+        "it": "Portfolio - Gabriele",
+        "en": "Portfolio - Gabriele"
+      }
+    },
+    {
+      "slug": "portfolio-martina",
+      "visibile": true,
+      "ordine": 6,
+      "titolo": {
+        "it": "Portfolio - Martina",
+        "en": "Portfolio - Martina"
+      }
+    },
+    {
+      "slug": "portfolio-leonardo",
+      "visibile": true,
+      "ordine": 7,
+      "titolo": {
+        "it": "Portfolio - Leonardo",
+        "en": "Portfolio - Leonardo"
+      }
+    },
+    {
+      "slug": "interni-real-estate-firenze",
+      "visibile": true,
+      "ordine": 8,
+      "titolo": {
+        "it": "Interni — Real Estate Firenze",
+        "en": "Interiors — Real Estate Florence"
+      }
+    },
+    {
+      "slug": "interni-b-b-porto-ercole",
+      "visibile": true,
+      "ordine": 9,
+      "titolo": {
+        "it": "Interni — B&B Porto Ercole",
+        "en": "Interiors — B&B Porto Ercole"
+      }
+    }
+  ],
+  "seo": {
+    "robots": "User-agent: *\nDisallow: /p/\nAllow: /\n\nSitemap: {SITE_URL}/sitemap.xml\n",
+    "llmsTxt": "# Simona Lascialfari — Fotografa\n\nFotografa con base a Bagno a Ripoli (Firenze): ritratto, danza, maternità e interni.\nSito: {SITE_URL}\nLe gallerie clienti sono private e protette; quelle in homepage sono consultabili dal pubblico.\n"
+  }
+}
