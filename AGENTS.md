@@ -61,6 +61,8 @@ Worker contatti (differito): deploy su account Cloudflare **di Simona** (mai Dav
 
 ## Swap dominio (go-live su simonalascialfari.com)
 
+**Stato 2026-11-06 — GO-LIVE COMPLETATO.** Fatto: transfer registrar Name.com→Porkbun (opz. proxy per mancanza accesso Name.com; scadenza 2028-04-22), NS→Cloudflare (alaric/heidi), Pages custom domain+HTTPS, variabili repo (VITE_BASE=/, CNAME_DOMAIN), env publisher (PUB_SITE_URL+PUBLISHER_ALLOWED_ORIGINS) con CORS verificato, admin re-baked (config canale: api simona-vm.dav3.cc, SITE_URL nuovo dominio; commit 8bf1385). Log completo: homelab skill `references/fleet.md` § swap. **Ancora da fare (manuali):** worker contatti (SITE_ORIGIN + deploy su CF con RESEND_API_KEY — l'endpoint attuale risponde 500), callback OAuth GitHub/Dropbox → `https://simonalascialfari.com/admin/`, verifica Search Console, hop opzionale a Cloudflare Registrar da ~2027-01-05 (lock 60gg). La checklist sotto resta come riferimento storico.
+
 Nessun URL è hardcodato nel codice: tutto passa da env/variabili repo. Checklist in ordine:
 
 1. **DNS**: nel registrar/CF di Simona, `simonalascialfari.com` → GitHub Pages (A records `185.199.108-111.153` + CNAME `www` → `dave-palt.github.io`), poi nel repo Settings → Pages → custom domain `simonalascialfari.com` + enforce HTTPS.
