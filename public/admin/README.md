@@ -14,5 +14,7 @@ solo da index.html.
   `window.__API_CONFIG.apiBase` ("" = same-origin).
 - Cache-bust: OGNI modifica a admin.js/dropbox.js/admin.css richiede il bump
   del `?v=N` in `admin.html` (Fastly ~10 min).
+- Login OAuth (GitHub/Dropbox) e callback URL: v. sezione «Admin» nel README
+  della root della repo.
 - Verifica sintattica: `node --check admin.js && node --check dropbox.js`
   (più `bun run check:ui`, che parsa questi file).

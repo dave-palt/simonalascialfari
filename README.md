@@ -27,6 +27,26 @@ npm run worker:deploy # deploy Worker su Cloudflare
 2. Variabile repo `VITE_CONTACT_ENDPOINT` = URL pubblico del Worker (es. `https://simona-contact.<account>.workers.dev/api/contact`).
 3. Worker: `wrangler secret put RESEND_API_KEY` poi `npm run worker:deploy`.
 
+## Admin (`/admin/`)
+
+Interfaccia statica baked (D25) in `public/admin/` — non editare a mano: si
+rigenera/pubblica con `selfhost/scripts/publish-admin-ui.sh` nella repo
+simona-infra (`PUB_API_URL`, `SITE_URL`, `DROPBOX_CLIENT_ID`). Meccanica dei
+file: `public/admin/README.md`; env del publisher: `docs/RUNBOOK-SELFHOST.md`
+(repo infra).
+
+Login via OAuth (app **simona-publisher**, client id `Ov23ctaNvNGfSQri8VRX`),
+redirect `https://simonalascialfari.com/admin/`:
+
+- GitHub: <https://github.com/settings/developers> → OAuth Apps →
+  simona-publisher → *Authorization callback URL*. App OAuth classica (`Ov23…`)
+  = UN solo callback permesso: il nuovo valore sostituisce il vecchio github.io
+  (sicuro — il 301 di Pages reindirizza già tutto sull'apex).
+- Dropbox: <https://www.dropbox.com/developers/apps> → app → *Redirect URIs*:
+  qui i redirect sono multipli, aggiungere il nuovo e tenere anche il vecchio.
+
+A un cambio dominio vanno aggiornate entrambe le app OAuth.
+
 ## Prerender
 
 `npm run build` genera HTML statico per `/`, `/privacy-policy`, `/cookie-policy`, `/404` iniettando `renderToString(<App ssrLocation=…>)` nella shell Vite. Il client poi re-renderizza con `createRoot` (niente idratazione). Nuove route: aggiungere a `ROUTES` in `scripts/prerender.tsx`.
