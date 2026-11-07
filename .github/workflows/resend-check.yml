@@ -29,12 +29,12 @@ jobs:
           echo "== test send 1: sandbox sender -> gh@dav3.cc =="
           curl -s "https://api.resend.com/emails" -X POST \
             -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" \
-            -d '{"from":"Diagnostic <onboarding@resend.dev>","to":["gh@dav3.cc"],"subject":"Resend diag 1: sandbox sender","text":"Se ricevi questa, la chiave invia OK (dominio non verificato e\' la causa)."}' \
+            -d '{"from":"Diagnostic <onboarding@resend.dev>","to":["gh@dav3.cc"],"subject":"Resend diag 1: sandbox sender","text":"Se ricevi questa, la chiave invia OK (dominio non verificato e la causa)."}' \
             -o /tmp/s1.json -w "HTTP %{http_code}\n"; head -c 500 /tmp/s1.json; echo
           echo "== test send 2: prod sender -> gh@dav3.cc =="
           curl -s "https://api.resend.com/emails" -X POST \
             -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" \
-            -d '{"from":"Simona Lascialfari <noreply@simonalascialfari.com>","to":["gh@dav3.cc"],"subject":"Resend diag 2: prod sender","text":"Se ricevi questa, il dominio e\' verificato e il form funziona."}' \
+            -d '{"from":"Simona Lascialfari <noreply@simonalascialfari.com>","to":["gh@dav3.cc"],"subject":"Resend diag 2: prod sender","text":"Se ricevi questa, il dominio e verificato e il form funziona."}' \
             -o /tmp/s2.json -w "HTTP %{http_code}\n"; head -c 500 /tmp/s2.json; echo
           python3 - <<'PYEOF'
           import json
