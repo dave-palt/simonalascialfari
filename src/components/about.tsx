@@ -11,7 +11,11 @@ export function About() {
 
   return (
     <section id="about" className="py-24 md:py-40 px-6 md:px-12 max-w-7xl mx-auto bg-background">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-24 items-center">
+      {/* md:gap-24 rimosso: 11 gap × 96px = 1056px > container sotto ~1152px di
+          viewport → le track collassavano a 0 e la griglia sbordava (scroll orizzontale,
+          pagina non centrata su tablet e telefono in "sito desktop"). gap-12 (48px) tiene
+          11×48=528px ≤ container già da 768px. */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
         
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
