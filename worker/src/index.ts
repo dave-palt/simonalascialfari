@@ -33,7 +33,19 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "OPTIONS") {
-      return json({}, 204, env.SITE_ORIGIN);
+      // Preflight: 204 MUST be bodyless (fetch spec: null-body status) —
+      // a Response with a body on 204 throws TypeError → CF error 1101,
+      // which killed every submission before CORS was even evaluated.
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "Access-Control-Allow-Origin": env.SITE_ORIGIN || "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Max-Age": "86400",
+          "Cache-Control": "no-store",
+        },
+      });
     }
     if (url.pathname !== "/api/contact") {
       return json({ error: "not_found" }, 404);

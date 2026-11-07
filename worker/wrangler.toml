@@ -2,19 +2,16 @@ name = "simona-contact"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 
-# Public vars (no secrets). SITE_ORIGIN = the GitHub Pages / custom domain
-# origin that is allowed to call the API.
-# TEMP TEST MODE (until simonalascialfari.com is verified on Resend and the
-# domain swap happens): CORS open to the github.io demo; sender is the
-# resend.dev test address (deliverable ONLY to the Resend account owner).
-# Prod values to restore later:
-#   SITE_ORIGIN  = "https://www.simonalascialfari.com"
-#   CONTACT_FROM = "Simona Lascialfari <noreply@simonalascialfari.com>"
-#   CONTACT_TO   = "simona.lascialfari.305@gmail.com"
+# Public vars (no secrets). SITE_ORIGIN = the origin allowed to call the API
+# (www 301s to the apex on GitHub Pages, so the apex alone suffices).
+# STAGED E2E (2026-11-07): SITE_ORIGIN/CONTACT_FROM are prod; CONTACT_TO stays
+# gh@dav3.cc until one real send is verified delivered, then flips to
+# simona.lascialfari.305@gmail.com (value in the comment below).
 [vars]
-SITE_ORIGIN = "https://dave-palt.github.io"
-CONTACT_FROM = "Simona Lascialfari <onboarding@resend.dev>"
+SITE_ORIGIN = "https://simonalascialfari.com"
+CONTACT_FROM = "Simona Lascialfari <noreply@simonalascialfari.com>"
 CONTACT_TO = "gh@dav3.cc"
+# CONTACT_TO = "simona.lascialfari.305@gmail.com"
 
 # Rate limiting: 10 requests per minute per IP.
 # NOTE: the API only supports period = 10 | 60 seconds, so the original
