@@ -1,0 +1,40 @@
+name: Resend domain status
+
+# Diagnostic: prints Resend domain verification status + expected DNS records
+# (public DNS data only — never prints the API key). workflow_dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      verify_id:
+        description: "Optional: domain id to re-trigger verification for"
+        required: false
+        default: ""
+
+permissions: {}
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query Resend domains
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          VERIFY_ID: ${{ inputs.verify_id }}
+        run: |
+          if [ -n "$VERIFY_ID" ]; then
+            echo "== re-verify $VERIFY_ID =="
+            curl -s -X POST "https://api.resend.com/domains/$VERIFY_ID/verify" \
+              -H "Authorization: Bearer $RESEND_API_KEY" | head -c 2000
+            echo
+          fi
+          echo "== domains =="
+          curl -s "https://api.resend.com/domains" \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          for dom in d.get('data',[]):
+              print('id:',dom.get('id'),'| name:',dom.get('name'),'| status:',dom.get('status'),'| region:',dom.get('region'))
+              for r in dom.get('records',[]):
+                  print('   ',r.get('record'),r.get('name'),'->',(r.get('value') or '')[:80],'| status:',r.get('status'))
+          "
