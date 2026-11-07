@@ -23,18 +23,22 @@ jobs:
         run: |
           if [ -n "$VERIFY_ID" ]; then
             echo "== re-verify $VERIFY_ID =="
-            curl -s -X POST "https://api.resend.com/domains/$VERIFY_ID/verify" \
-              -H "Authorization: Bearer $RESEND_API_KEY" | head -c 2000
+            curl -s -X POST "https://api.resend.com/domains/$VERIFY_ID/verify" -H "Authorization: Bearer $RESEND_API_KEY" | head -c 2000
             echo
           fi
-          echo "== domains =="
-          curl -s "https://api.resend.com/domains" \
-            -H "Authorization: Bearer $RESEND_API_KEY" \
-            | python3 -c "
-          import json,sys
-          d=json.load(sys.stdin)
-          for dom in d.get('data',[]):
-              print('id:',dom.get('id'),'| name:',dom.get('name'),'| status:',dom.get('status'),'| region:',dom.get('region'))
-              for r in dom.get('records',[]):
-                  print('   ',r.get('record'),r.get('name'),'->',(r.get('value') or '')[:80],'| status:',r.get('status'))
-          "
+          echo "== domains (raw) =="
+          curl -s "https://api.resend.com/domains" -H "Authorization: Bearer $RESEND_API_KEY" -o /tmp/domains.json -w "HTTP %{http_code}\n"
+          head -c 1500 /tmp/domains.json
+          echo
+          python3 - <<'PYEOF'
+          import json
+          try:
+              d = json.load(open('/tmp/domains.json'))
+          except Exception as e:
+              print('parse error:', e)
+              raise SystemExit
+          for dom in d.get('data', []):
+              print('id:', dom.get('id'), '| name:', dom.get('name'), '| status:', dom.get('status'), '| region:', dom.get('region'))
+              for r in dom.get('records', []):
+                  print('   ', r.get('record'), r.get('name'), '->', (r.get('value') or '')[:80], '| status:', r.get('status'))
+          PYEOF
