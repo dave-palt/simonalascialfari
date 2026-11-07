@@ -4,14 +4,14 @@ compatibility_date = "2026-10-01"
 
 # Public vars (no secrets). SITE_ORIGIN = the origin allowed to call the API
 # (www 301s to the apex on GitHub Pages, so the apex alone suffices).
-# STAGED E2E (2026-11-07): SITE_ORIGIN/CONTACT_FROM are prod; CONTACT_TO stays
-# gh@dav3.cc until one real send is verified delivered, then flips to
-# simona.lascialfari.305@gmail.com (value in the comment below).
+# Production values (domain verified on Resend 2026-11-07).
+
+
 [vars]
 SITE_ORIGIN = "https://simonalascialfari.com"
 CONTACT_FROM = "Simona Lascialfari <noreply@simonalascialfari.com>"
-CONTACT_TO = "gh@dav3.cc"
-# CONTACT_TO = "simona.lascialfari.305@gmail.com"
+# (e2e verified 2026-11-07: prod sender delivered to gh@dav3.cc)
+CONTACT_TO = "simona.lascialfari.305@gmail.com"
 
 # Rate limiting: 10 requests per minute per IP.
 # NOTE: the API only supports period = 10 | 60 seconds, so the original
