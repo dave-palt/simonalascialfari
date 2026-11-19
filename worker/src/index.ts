@@ -60,7 +60,8 @@ export default {
       return json({ error: "origin_not_allowed" }, 403);
     }
 
-    // Rate limit: 10 requests / 10 min per IP via Workers Rate Limiting
+    // Rate limit: 10 requests / 60 s per IP via Workers Rate Limiting
+    // (l'API supporta solo period = 10 | 60 secondi — vedi wrangler.toml)
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const { success } = await env.RATE_LIMITER.limit({ key: ip });
     if (!success) {

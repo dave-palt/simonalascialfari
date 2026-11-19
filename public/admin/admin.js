@@ -1,11 +1,33 @@
-// ---- prologo D25: base API, config di canale, fetch cross-origin, stato offline ----
+// ---- prologo: base API, config di canale, fetch cross-origin, stato offline ----
+// L'override ?api= (e il suo residuo in localStorage) è accettato SOLO se
+// same-origin, localhost (dev locale) o pari all'apiBase del canale. Ogni
+// altro valore è ignorato e il residuo CANCELLATO: un link tipo
+// /admin/?api=https://evil.example non deve mai poter dirottare le chiamate
+// del pannello (che viaggiano col Bearer token) su un server estraneo.
 var __API = "";
 (function () {
-  var qApi = new URLSearchParams(location.search).get("api");
-  if (qApi) { try { localStorage.setItem("simona:api", qApi); } catch (e) {} }
-  var stored = "";
-  try { stored = localStorage.getItem("simona:api") || ""; } catch (e) {}
   var cfg = window.__API_CONFIG || {};
+  function apiAmmessa(v) {
+    if (!v) return "";
+    try {
+      var u = new URL(v, location.origin);
+      if (u.origin === location.origin) return v;
+      var h = u.hostname;
+      var locale = h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h.slice(-10) === ".localhost";
+      if (locale) return (u.protocol === "http:" || u.protocol === "https:") ? v : "";
+      if (u.protocol !== "https:") return "";
+      if (cfg.apiBase && u.origin === new URL(cfg.apiBase, location.origin).origin) return v;
+    } catch (e) {}
+    return "";
+  }
+  var qApi = apiAmmessa(new URLSearchParams(location.search).get("api") || "");
+  var stored = "";
+  try { stored = apiAmmessa(localStorage.getItem("simona:api") || "") || ""; } catch (e) {}
+  try {
+    if (qApi) localStorage.setItem("simona:api", qApi);
+    else if (stored) localStorage.setItem("simona:api", stored);
+    else localStorage.removeItem("simona:api"); // bonifica residui di versioni precedenti
+  } catch (e) {}
   __API = qApi || stored || cfg.apiBase || "";
   while (__API.charAt(__API.length - 1) === "/") __API = __API.slice(0, -1);
   window.__API_BASE = __API;
