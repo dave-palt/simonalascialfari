@@ -1,7 +1,7 @@
 import { useTranslation } from "@/lib/i18n";
-import { Link } from "wouter";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { BackToHome } from "@/components/back-to-home";
 import { useEffect } from "react";
 
 export default function PrivacyPolicy() {
@@ -22,9 +22,7 @@ export default function PrivacyPolicy() {
     <div className="min-h-[100dvh] w-full flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 px-6 md:px-12 max-w-3xl mx-auto py-32 md:py-40 text-foreground">
-        <Link href="/" className="text-[10px] tracking-[0.3em] uppercase text-foreground/50 hover:text-foreground transition-colors">
-          ← {language === "it" ? "Torna alla home" : "Back to home"}
-        </Link>
+        <BackToHome />
         <h1 className="text-xs tracking-[0.2em] uppercase mt-12 mb-12">{content.title}</h1>
         <div className="font-serif text-base md:text-lg leading-relaxed text-foreground/80 space-y-6">
           {content.body.map((p, i) =>
