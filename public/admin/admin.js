@@ -33,6 +33,13 @@ var __API = "";
   window.__API_BASE = __API;
   if (cfg.dropboxClientId && !window.__DROPBOX_CLIENT_ID) window.__DROPBOX_CLIENT_ID = cfg.dropboxClientId;
   if (cfg.siteUrl && !window.__SITE_URL) window.__SITE_URL = cfg.siteUrl;
+  // heading del pannello → homepage del sito. Il markup parte con href="/"
+  // (giusto sul canale live anche senza JS); la config di canale corregge
+  // l'URL dove l'admin non è servito dallo stesso origine del sito.
+  try {
+    var __brand = document.getElementById("brandHome");
+    if (__brand && window.__SITE_URL) __brand.href = new URL(window.__SITE_URL).origin + "/";
+  } catch (e) {}
 })();
 
 // fetch cross-origin: i path di servizio ("/api/…", "/staging/…", "/raw/…")
